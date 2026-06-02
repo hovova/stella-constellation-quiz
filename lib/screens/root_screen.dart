@@ -9,6 +9,7 @@ import 'constellations_screen.dart';
 import 'duel_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
+import 'splash_screen.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -27,11 +28,18 @@ class _RootScreenState extends State<RootScreen> {
   @override
   void initState() {
     super.initState();
-    loadProgress();
+    loadProgressWithSplash();
   }
 
-  Future<void> loadProgress() async {
-    final loadedProgress = await storageService.loadProgress();
+  Future<void> loadProgressWithSplash() async {
+    final results = await Future.wait([
+      storageService.loadProgress(),
+      Future.delayed(const Duration(milliseconds: 1800)),
+    ]);
+
+    final loadedProgress = results.first as PlayerProgress;
+
+    if (!mounted) return;
 
     setState(() {
       progress = loadedProgress;
@@ -71,14 +79,7 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF071426),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFFD98A),
-          ),
-        ),
-      );
+      return const SplashScreen();
     }
 
     final screens = [
