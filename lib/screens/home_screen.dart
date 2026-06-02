@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../data/achievements.dart';
 import '../models/player_progress.dart';
+import '../widgets/language_selector.dart';
 import '../widgets/premium_banner.dart';
+import '../widgets/sound_toggle_button.dart';
 import 'achievements_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final PlayerProgress progress;
+  final void Function(PlayerProgress updatedProgress) onProgressUpdated;
   final VoidCallback onNavigateToCampaign;
 
   const HomeScreen({
     super.key,
     required this.progress,
+    required this.onProgressUpdated,
     required this.onNavigateToCampaign,
   });
 
@@ -31,7 +35,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-    void openAchievements(BuildContext context) {
+  void openAchievements(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -54,19 +58,30 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Row(
               children: [
-                Text(
-                  'Mriya Interactive',
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 12,
-                    letterSpacing: 1.4,
-                    fontWeight: FontWeight.w600,
+                const Expanded(
+                  child: Text(
+                    'Mriya Interactive',
+                    style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 12,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                PremiumBanner(),
+                LanguageSelector(
+                  progress: progress,
+                  onProgressUpdated: onProgressUpdated,
+                ),
+                const SizedBox(width: 8),
+                SoundToggleButton(
+                  progress: progress,
+                  onProgressUpdated: onProgressUpdated,
+                ),
+                const SizedBox(width: 8),
+                const PremiumBanner(),
               ],
             ),
 
@@ -123,12 +138,12 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-          _AchievementProgressCard(
-            unlockedAchievements: unlockedAchievements,
-            totalAchievements: totalAchievements,
-            progress: achievementProgress,
-            onTap: () => openAchievements(context),
-          ),
+            _AchievementProgressCard(
+              unlockedAchievements: unlockedAchievements,
+              totalAchievements: totalAchievements,
+              progress: achievementProgress,
+              onTap: () => openAchievements(context),
+            ),
 
             const Spacer(),
 

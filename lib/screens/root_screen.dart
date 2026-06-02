@@ -85,6 +85,7 @@ class _RootScreenState extends State<RootScreen> {
     final screens = [
       HomeScreen(
         progress: progress,
+        onProgressUpdated: updateProgress,
         onNavigateToCampaign: () => onTabSelected(1),
       ),
       CampaignScreen(

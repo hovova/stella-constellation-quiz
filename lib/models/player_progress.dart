@@ -6,6 +6,9 @@ class PlayerProgress {
   final String selectedAvatarId;
   final bool hasNoAds;
   final bool hasPremium;
+  final String selectedLanguageCode;
+  final bool soundEnabled;
+  final bool musicEnabled;
 
   const PlayerProgress({
     required this.totalXp,
@@ -15,6 +18,9 @@ class PlayerProgress {
     required this.selectedAvatarId,
     required this.hasNoAds,
     required this.hasPremium,
+    required this.selectedLanguageCode,
+    required this.soundEnabled,
+    required this.musicEnabled,
   });
 
   factory PlayerProgress.initial() {
@@ -26,6 +32,9 @@ class PlayerProgress {
       selectedAvatarId: 'star',
       hasNoAds: false,
       hasPremium: false,
+      selectedLanguageCode: 'en',
+      soundEnabled: true,
+      musicEnabled: true,
     );
   }
 
@@ -37,15 +46,23 @@ class PlayerProgress {
     String? selectedAvatarId,
     bool? hasNoAds,
     bool? hasPremium,
+    String? selectedLanguageCode,
+    bool? soundEnabled,
+    bool? musicEnabled,
   }) {
     return PlayerProgress(
       totalXp: totalXp ?? this.totalXp,
       bestScoresByLevel: bestScoresByLevel ?? this.bestScoresByLevel,
-      unlockedAchievements: unlockedAchievements ?? this.unlockedAchievements,
+      unlockedAchievements:
+          unlockedAchievements ?? this.unlockedAchievements,
       playerName: playerName ?? this.playerName,
       selectedAvatarId: selectedAvatarId ?? this.selectedAvatarId,
       hasNoAds: hasNoAds ?? this.hasNoAds,
       hasPremium: hasPremium ?? this.hasPremium,
+      selectedLanguageCode:
+          selectedLanguageCode ?? this.selectedLanguageCode,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      musicEnabled: musicEnabled ?? this.musicEnabled,
     );
   }
 
@@ -109,6 +126,9 @@ class PlayerProgress {
       'selectedAvatarId': selectedAvatarId,
       'hasNoAds': hasNoAds,
       'hasPremium': hasPremium,
+      'selectedLanguageCode': selectedLanguageCode,
+      'soundEnabled': soundEnabled,
+      'musicEnabled': musicEnabled,
     };
   }
 
@@ -125,6 +145,10 @@ class PlayerProgress {
       selectedAvatarId: json['selectedAvatarId'] as String? ?? 'star',
       hasNoAds: json['hasNoAds'] as bool? ?? false,
       hasPremium: json['hasPremium'] as bool? ?? false,
+      selectedLanguageCode:
+          json['selectedLanguageCode'] as String? ?? 'en',
+      soundEnabled: json['soundEnabled'] as bool? ?? true,
+      musicEnabled: json['musicEnabled'] as bool? ?? true,
     );
   }
 }

@@ -6,6 +6,7 @@ import '../data/campaign_levels.dart';
 import '../models/campaign_level.dart';
 import '../models/player_progress.dart';
 import 'home_screen.dart';
+import 'premium_screen.dart';
 import 'quiz_screen.dart';
 
 class CampaignScreen extends StatelessWidget {
@@ -63,15 +64,48 @@ class CampaignScreen extends StatelessWidget {
   }
 
   void startLevel(BuildContext context, CampaignLevel level) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => QuizScreen(
-          level: level,
-          progress: progress,
-          onProgressUpdated: onProgressUpdated,
-        ),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _LevelModeSheet(
+        level: level,
+        onClassicTap: () {
+          Navigator.pop(context);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => QuizScreen(
+                level: level,
+                progress: progress,
+                onProgressUpdated: onProgressUpdated,
+              ),
+            ),
+          );
+        },
+        onMythologyTap: () {
+          Navigator.pop(context);
+          openPremiumMenu(context);
+        },
+        onAll88Tap: () {
+          Navigator.pop(context);
+          openPremiumMenu(context);
+        },
+        onMatchModeTap: () {
+          Navigator.pop(context);
+          openPremiumMenu(context);
+        },
       ),
+    );
+  }
+
+  void openPremiumMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const PremiumScreen(),
     );
   }
 
@@ -130,7 +164,7 @@ class CampaignScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             const Text(
-              'Move through the sky path. Each level adds 4 new constellations while keeping previous ones.',
+              'Move through the sky path. Tap a level to choose a quiz mode and begin.',
               style: TextStyle(
                 color: Colors.white60,
                 height: 1.5,
@@ -157,6 +191,224 @@ class CampaignScreen extends StatelessWidget {
               );
             }),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LevelModeSheet extends StatelessWidget {
+  final CampaignLevel level;
+  final VoidCallback onClassicTap;
+  final VoidCallback onMythologyTap;
+  final VoidCallback onAll88Tap;
+  final VoidCallback onMatchModeTap;
+
+  const _LevelModeSheet({
+    required this.level,
+    required this.onClassicTap,
+    required this.onMythologyTap,
+    required this.onAll88Tap,
+    required this.onMatchModeTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final constellationCount = level.constellations.length;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF071426),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      level.title,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD98A),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                '$constellationCount constellations available in this level.',
+                style: const TextStyle(
+                  color: Colors.white60,
+                  height: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              const Text(
+                'Choose Quiz Mode',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              _LevelModeOption(
+                title: 'Classic Quiz',
+                subtitle: 'Identify constellations from their images.',
+                icon: Icons.auto_awesome,
+                premium: false,
+                onTap: onClassicTap,
+              ),
+
+              const SizedBox(height: 12),
+
+              _LevelModeOption(
+                title: 'Mythology',
+                subtitle: 'Premium mode • Learn the stories behind the stars.',
+                icon: Icons.menu_book,
+                premium: true,
+                onTap: onMythologyTap,
+              ),
+
+              const SizedBox(height: 12),
+
+              _LevelModeOption(
+                title: 'All 88 Challenge',
+                subtitle: 'Premium mode • Master every official constellation.',
+                icon: Icons.public,
+                premium: true,
+                onTap: onAll88Tap,
+              ),
+
+              const SizedBox(height: 12),
+
+              _LevelModeOption(
+                title: 'Match Mode',
+                subtitle: 'Premium mode • Match pictures with names.',
+                icon: Icons.grid_view,
+                premium: true,
+                onTap: onMatchModeTap,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LevelModeOption extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool premium;
+  final VoidCallback onTap;
+
+  const _LevelModeOption({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.premium,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: premium ? const Color(0xFF132B46) : const Color(0xFF10243B),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: premium
+              ? const Color(0x55FFD98A)
+              : const Color(0x223A5B80),
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFFFFD98A),
+                size: 30,
+              ),
+
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (premium) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.workspace_premium,
+                            color: Color(0xFFFFD98A),
+                            size: 16,
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color:
+                            premium ? const Color(0xFFFFD98A) : Colors.white60,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.chevron_right,
+                color: Colors.white38,
+              ),
+            ],
+          ),
         ),
       ),
     );
