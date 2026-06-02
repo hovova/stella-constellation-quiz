@@ -118,9 +118,12 @@ class _CampaignLevelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final constellationCount = level.constellations.length;
+    final hasGoldAward = bestScore == 5;
 
     final progressText = unlocked
-        ? 'Best score: $bestScore / 5 • $constellationCount constellations'
+        ? hasGoldAward
+            ? 'Gold Award • Perfect score • $constellationCount constellations'
+            : 'Best score: $bestScore / 5 • $constellationCount constellations'
         : 'Locked • Requires ${level.requiredXp} XP or 100% on previous level';
 
     return Card(
@@ -129,7 +132,11 @@ class _CampaignLevelCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: unlocked ? const Color(0x44FFD98A) : const Color(0x223A5B80),
+          color: hasGoldAward
+              ? const Color(0xFFFFD98A)
+              : unlocked
+                  ? const Color(0x44FFD98A)
+                  : const Color(0x223A5B80),
         ),
       ),
       child: InkWell(
@@ -140,8 +147,16 @@ class _CampaignLevelCard extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                unlocked ? Icons.lock_open_outlined : Icons.lock_outline,
-                color: unlocked ? const Color(0xFFFFD98A) : Colors.white30,
+                hasGoldAward
+                    ? Icons.workspace_premium
+                    : unlocked
+                        ? Icons.lock_open_outlined
+                        : Icons.lock_outline,
+                color: hasGoldAward
+                    ? const Color(0xFFFFD98A)
+                    : unlocked
+                        ? const Color(0xFFFFD98A)
+                        : Colors.white30,
               ),
 
               const SizedBox(width: 16),
@@ -174,9 +189,14 @@ class _CampaignLevelCard extends StatelessWidget {
                     Text(
                       progressText,
                       style: TextStyle(
-                        color:
-                            unlocked ? const Color(0xFFFFD98A) : Colors.white30,
+                        color: hasGoldAward
+                            ? const Color(0xFFFFD98A)
+                            : unlocked
+                                ? const Color(0xFFFFD98A)
+                                : Colors.white30,
                         fontSize: 12,
+                        fontWeight:
+                            hasGoldAward ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -184,9 +204,13 @@ class _CampaignLevelCard extends StatelessWidget {
               ),
 
               if (unlocked)
-                const Icon(
-                  Icons.chevron_right,
-                  color: Colors.white38,
+                Icon(
+                  hasGoldAward
+                      ? Icons.emoji_events
+                      : Icons.chevron_right,
+                  color: hasGoldAward
+                      ? const Color(0xFFFFD98A)
+                      : Colors.white38,
                 ),
             ],
           ),

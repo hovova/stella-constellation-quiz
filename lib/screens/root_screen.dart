@@ -6,6 +6,8 @@ import 'campaign_screen.dart';
 import 'constellations_screen.dart';
 import 'duel_screen.dart';
 import 'profile_screen.dart';
+import '../data/achievements.dart';
+import '../widgets/achievement_popup.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -42,6 +44,25 @@ class _RootScreenState extends State<RootScreen> {
       const DuelScreen(),
       ProfileScreen(progress: progress),
     ];
+
+    @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!progress.hasAchievement(AchievementIds.firstLogin)) {
+        final updatedProgress = progress.unlockAchievement(
+          AchievementIds.firstLogin,
+        );
+
+        setState(() {
+          progress = updatedProgress;
+        });
+
+        showAchievementPopup(context, firstLoginAchievement);
+      }
+    });
+  }
 
     return Scaffold(
       body: screens[selectedIndex],

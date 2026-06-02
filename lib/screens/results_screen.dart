@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../data/achievements.dart';
+import '../data/campaign_levels.dart';
+import '../models/achievement.dart';
 import '../models/campaign_level.dart';
 import '../models/player_progress.dart';
+import '../widgets/achievement_popup.dart';
 import 'home_screen.dart';
 import 'quiz_screen.dart';
 
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
   final CampaignLevel level;
   final PlayerProgress progress;
   final int score;
@@ -23,8 +27,72 @@ class ResultsScreen extends StatelessWidget {
     required this.onProgressUpdated,
   });
 
+  @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  late PlayerProgress visibleProgress;
+
+  @override
+  void initState() {
+    super.initState();
+    visibleProgress = widget.progress;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unlockResultAchievements();
+    });
+  }
+
   int get accuracy {
-    return ((score / totalQuestions) * 100).round();
+    return ((widget.score / widget.totalQuestions) * 100).round();
+  }
+
+  bool get gotGoldAward {
+    return widget.score == widget.totalQuestions;
+  }
+
+  void unlockResultAchievements() {
+    var updatedProgress = visibleProgress;
+    final achievementsToShow = <Achievement>[];
+
+    if (!updatedProgress.hasAchievement(AchievementIds.firstQuiz)) {
+      updatedProgress = updatedProgress.unlockAchievement(
+        AchievementIds.firstQuiz,
+      );
+      achievementsToShow.add(firstQuizAchievement);
+    }
+
+    if (gotGoldAward &&
+        !updatedProgress.hasAchievement(AchievementIds.goldStargazer)) {
+      updatedProgress = updatedProgress.unlockAchievement(
+        AchievementIds.goldStargazer,
+      );
+      achievementsToShow.add(goldStargazerAchievement);
+    }
+
+    final totalCampaignLevels = campaignLevels.length;
+    final goldAwards = updatedProgress.goldAwardCount(widget.totalQuestions);
+
+    if (goldAwards == totalCampaignLevels &&
+        !updatedProgress.hasAchievement(AchievementIds.diamondSkyMaster)) {
+      updatedProgress = updatedProgress.unlockAchievement(
+        AchievementIds.diamondSkyMaster,
+      );
+      achievementsToShow.add(diamondSkyMasterAchievement);
+    }
+
+    if (updatedProgress != visibleProgress) {
+      setState(() {
+        visibleProgress = updatedProgress;
+      });
+
+      widget.onProgressUpdated(updatedProgress);
+    }
+
+    for (final achievement in achievementsToShow) {
+      showAchievementPopup(context, achievement);
+    }
   }
 
   @override
@@ -38,9 +106,9 @@ class ResultsScreen extends StatelessWidget {
             children: [
               const Spacer(),
 
-              const Text(
-                'Quiz Complete',
-                style: TextStyle(
+              Text(
+                gotGoldAward ? 'Gold Award Earned' : 'Quiz Complete',
+                style: const TextStyle(
                   color: Color(0xFFFFD98A),
                   fontSize: 38,
                   fontWeight: FontWeight.bold,
@@ -50,18 +118,66 @@ class ResultsScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               Text(
-                level.title,
+                widget.level.title,
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 16,
                 ),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 24),
+
+              if (gotGoldAward)
+                Card(
+                  color: const Color(0xFF10243B),
+                  margin: const EdgeInsets.only(bottom: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    side: const BorderSide(
+                      color: Color(0xFFFFD98A),
+                    ),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.workspace_premium,
+                          color: Color(0xFFFFD98A),
+                          size: 42,
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Gold Award',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Perfect score achieved on this level.',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
               _ResultCard(
                 title: 'Score',
-                value: '$score / $totalQuestions',
+                value: '${widget.score} / ${widget.totalQuestions}',
                 icon: Icons.check_circle_outline,
               ),
               _ResultCard(
@@ -71,13 +187,19 @@ class ResultsScreen extends StatelessWidget {
               ),
               _ResultCard(
                 title: 'XP Earned',
-                value: '+$xpEarned XP',
+                value: '+${widget.xpEarned} XP',
                 icon: Icons.bolt,
               ),
               _ResultCard(
                 title: 'Total XP',
-                value: '${progress.totalXp} XP',
+                value: '${visibleProgress.totalXp} XP',
                 icon: Icons.workspace_premium_outlined,
+              ),
+              _ResultCard(
+                title: 'Gold Awards',
+                value:
+                    '${visibleProgress.goldAwardCount(widget.totalQuestions)}',
+                icon: Icons.emoji_events_outlined,
               ),
 
               const Spacer(),
@@ -91,9 +213,9 @@ class ResultsScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => QuizScreen(
-                          level: level,
-                          progress: progress,
-                          onProgressUpdated: onProgressUpdated,
+                          level: widget.level,
+                          progress: visibleProgress,
+                          onProgressUpdated: widget.onProgressUpdated,
                         ),
                       ),
                     );
