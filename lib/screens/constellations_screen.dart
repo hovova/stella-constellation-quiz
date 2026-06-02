@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
+
+import '../data/constellation_data.dart';
+import '../models/constellation.dart';
+import 'constellation_detail_screen.dart';
 import 'home_screen.dart';
 
-class ConstellationsScreen extends StatelessWidget {
+class ConstellationsScreen extends StatefulWidget {
   const ConstellationsScreen({super.key});
 
-  final List<String> constellations = const [
-    'Orion',
-    'Ursa Major',
-    'Ursa Minor',
-    'Cassiopeia',
-    'Scorpius',
-    'Leo',
-    'Cygnus',
-    'Lyra',
-    'Taurus',
-    'Gemini',
-  ];
+  @override
+  State<ConstellationsScreen> createState() => _ConstellationsScreenState();
+}
+
+class _ConstellationsScreenState extends State<ConstellationsScreen> {
+  String searchQuery = '';
+
+  List<Constellation> get filteredConstellations {
+    return allConstellations.where((constellation) {
+      return constellation.name.toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          );
+    }).toList();
+  }
+
+  void openConstellation(Constellation constellation) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConstellationDetailScreen(
+          constellation: constellation,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,17 +50,25 @@ class ConstellationsScreen extends StatelessWidget {
                 color: Color(0xFFFFD98A),
               ),
             ),
+
             const SizedBox(height: 8),
+
             const Text(
-              'Browse the constellation encyclopedia. Full details will be added soon.',
+              'Browse the constellation encyclopedia and learn the stories behind the night sky.',
               style: TextStyle(
                 color: Colors.white60,
                 height: 1.5,
               ),
             ),
+
             const SizedBox(height: 20),
 
             TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
               decoration: InputDecoration(
                 hintText: 'Search constellations',
                 prefixIcon: const Icon(Icons.search),
@@ -60,9 +85,9 @@ class ConstellationsScreen extends StatelessWidget {
 
             Expanded(
               child: ListView.builder(
-                itemCount: constellations.length,
+                itemCount: filteredConstellations.length,
                 itemBuilder: (context, index) {
-                  final constellation = constellations[index];
+                  final constellation = filteredConstellations[index];
 
                   return Card(
                     color: const Color(0xFF10243B),
@@ -71,20 +96,21 @@ class ConstellationsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListTile(
+                      onTap: () => openConstellation(constellation),
                       leading: const Icon(
                         Icons.auto_awesome,
                         color: Color(0xFFFFD98A),
                       ),
                       title: Text(
-                        constellation,
+                        constellation.name,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      subtitle: const Text(
-                        'Tap to view details soon',
-                        style: TextStyle(color: Colors.white38),
+                      subtitle: Text(
+                        '${constellation.difficulty} • ${constellation.bestSeason}',
+                        style: const TextStyle(color: Colors.white38),
                       ),
                       trailing: const Icon(
                         Icons.chevron_right,
