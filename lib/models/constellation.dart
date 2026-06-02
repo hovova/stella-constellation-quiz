@@ -5,6 +5,7 @@ class Constellation {
   final String hemisphere;
   final String bestSeason;
   final String brightestStar;
+  final String imagePath;
   final String description;
   final String mythology;
 
@@ -15,6 +16,7 @@ class Constellation {
     required this.hemisphere,
     required this.bestSeason,
     required this.brightestStar,
+    required this.imagePath,
     required this.description,
     required this.mythology,
   });

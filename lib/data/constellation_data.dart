@@ -8,6 +8,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern and Southern',
     bestSeason: 'Winter',
     brightestStar: 'Rigel',
+    imagePath: 'assets/constellations/orion.png',
     description:
         'Orion is one of the most recognisable constellations in the night sky. Its three-star belt makes it easy to identify.',
     mythology:
@@ -20,6 +21,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern',
     bestSeason: 'Spring',
     brightestStar: 'Alioth',
+    imagePath: 'assets/constellations/ursa_major.png',
     description:
         'Ursa Major is famous for containing the Big Dipper asterism, one of the easiest star patterns to find.',
     mythology:
@@ -32,6 +34,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern',
     bestSeason: 'All year',
     brightestStar: 'Polaris',
+    imagePath: 'assets/constellations/ursa_minor.png',
     description:
         'Ursa Minor contains Polaris, the North Star, which has historically been used for navigation.',
     mythology:
@@ -44,6 +47,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern',
     bestSeason: 'Autumn',
     brightestStar: 'Schedar',
+    imagePath: 'assets/constellations/cassiopeia.png',
     description:
         'Cassiopeia is easy to recognise because its brightest stars form a clear W or M shape in the sky.',
     mythology:
@@ -56,6 +60,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Southern',
     bestSeason: 'Summer',
     brightestStar: 'Antares',
+    imagePath: 'assets/constellations/scorpius.png',
     description:
         'Scorpius has a curved shape that resembles a scorpion and contains the bright red star Antares.',
     mythology:
@@ -68,6 +73,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern and Southern',
     bestSeason: 'Spring',
     brightestStar: 'Regulus',
+    imagePath: 'assets/constellations/leo.png',
     description:
         'Leo represents a lion and is one of the zodiac constellations. Its sickle-shaped pattern is fairly easy to spot.',
     mythology:
@@ -80,6 +86,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern',
     bestSeason: 'Summer',
     brightestStar: 'Deneb',
+    imagePath: 'assets/constellations/cygnus.png',
     description:
         'Cygnus is known as the Swan and forms a cross-like shape in the Milky Way.',
     mythology:
@@ -92,6 +99,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern',
     bestSeason: 'Summer',
     brightestStar: 'Vega',
+    imagePath: 'assets/constellations/lyra.png',
     description:
         'Lyra is a small constellation containing Vega, one of the brightest stars in the night sky.',
     mythology:
@@ -104,6 +112,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern and Southern',
     bestSeason: 'Winter',
     brightestStar: 'Aldebaran',
+    imagePath: 'assets/constellations/taurus.png',
     description:
         'Taurus represents a bull and contains the bright star Aldebaran and the famous Pleiades star cluster.',
     mythology:
@@ -116,6 +125,7 @@ const List<Constellation> beginnerConstellations = [
     hemisphere: 'Northern and Southern',
     bestSeason: 'Winter',
     brightestStar: 'Pollux',
+    imagePath: 'assets/constellations/gemini.png',
     description:
         'Gemini is one of the zodiac constellations and is recognised by its two bright stars, Castor and Pollux.',
     mythology:

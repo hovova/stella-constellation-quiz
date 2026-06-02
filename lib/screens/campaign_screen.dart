@@ -1,20 +1,46 @@
 import 'package:flutter/material.dart';
 
-import '../data/constellation_data.dart';
+import '../data/campaign_levels.dart';
+import '../models/campaign_level.dart';
+import '../models/player_progress.dart';
 import 'home_screen.dart';
 import 'quiz_screen.dart';
 
 class CampaignScreen extends StatelessWidget {
-  const CampaignScreen({super.key});
+  final PlayerProgress progress;
+  final void Function(PlayerProgress updatedProgress) onProgressUpdated;
 
-  void startBeginnerQuiz(BuildContext context) {
+  const CampaignScreen({
+    super.key,
+    required this.progress,
+    required this.onProgressUpdated,
+  });
+
+  bool isLevelUnlocked(CampaignLevel level) {
+    if (level.levelNumber == 1) {
+      return true;
+    }
+
+    final hasRequiredXp = progress.totalXp >= level.requiredXp;
+
+    final previousLevelId = level.previousLevelId;
+    final hasPerfectPreviousLevel = previousLevelId != null &&
+        progress.hasPerfectScore(
+          levelId: previousLevelId,
+          totalQuestions: 5,
+        );
+
+    return hasRequiredXp || hasPerfectPreviousLevel;
+  }
+
+  void startLevel(BuildContext context, CampaignLevel level) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const QuizScreen(
-          title: 'Beginner Level 1',
-          constellations: beginnerConstellations,
-          questionCount: 5,
+        builder: (_) => QuizScreen(
+          level: level,
+          progress: progress,
+          onProgressUpdated: onProgressUpdated,
         ),
       ),
     );
@@ -38,8 +64,18 @@ class CampaignScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            Text(
+              'Total XP: ${progress.totalXp}',
+              style: const TextStyle(
+                color: Color(0xFFFFD98A),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
             const Text(
-              'Progress through difficulty levels and master the constellations.',
+              'Each level adds 4 new constellations while keeping previous ones. Unlock the next level with enough XP or 100% on the previous level.',
               style: TextStyle(
                 color: Colors.white60,
                 height: 1.5,
@@ -48,37 +84,17 @@ class CampaignScreen extends StatelessWidget {
 
             const SizedBox(height: 28),
 
-            _CampaignLevelCard(
-              level: 'Beginner',
-              description:
-                  'Famous constellations like Orion, Ursa Major and Cassiopeia.',
-              progress: 'Level 1 available',
-              unlocked: true,
-              onTap: () => startBeginnerQuiz(context),
-            ),
+            ...campaignLevels.map((level) {
+              final unlocked = isLevelUnlocked(level);
+              final bestScore = progress.bestScoresByLevel[level.id] ?? 0;
 
-            const _CampaignLevelCard(
-              level: 'Intermediate',
-              description:
-                  'Recognise more complex star patterns and seasonal skies.',
-              progress: 'Locked',
-              unlocked: false,
-            ),
-
-            const _CampaignLevelCard(
-              level: 'Advanced',
-              description: 'Harder constellations with fewer obvious shapes.',
-              progress: 'Locked',
-              unlocked: false,
-            ),
-
-            const _CampaignLevelCard(
-              level: 'Expert',
-              description:
-                  'Rare and obscure constellations for true stargazers.',
-              progress: 'Locked',
-              unlocked: false,
-            ),
+              return _CampaignLevelCard(
+                level: level,
+                unlocked: unlocked,
+                bestScore: bestScore,
+                onTap: unlocked ? () => startLevel(context, level) : null,
+              );
+            }),
           ],
         ),
       ),
@@ -87,22 +103,26 @@ class CampaignScreen extends StatelessWidget {
 }
 
 class _CampaignLevelCard extends StatelessWidget {
-  final String level;
-  final String description;
-  final String progress;
+  final CampaignLevel level;
   final bool unlocked;
+  final int bestScore;
   final VoidCallback? onTap;
 
   const _CampaignLevelCard({
     required this.level,
-    required this.description,
-    required this.progress,
     required this.unlocked,
+    required this.bestScore,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final constellationCount = level.constellations.length;
+
+    final progressText = unlocked
+        ? 'Best score: $bestScore / 5 • $constellationCount constellations'
+        : 'Locked • Requires ${level.requiredXp} XP or 100% on previous level';
+
     return Card(
       color: unlocked ? const Color(0xFF10243B) : const Color(0xFF081525),
       margin: const EdgeInsets.only(bottom: 16),
@@ -131,7 +151,7 @@ class _CampaignLevelCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      level,
+                      level.title,
                       style: TextStyle(
                         color: unlocked ? Colors.white : Colors.white38,
                         fontSize: 18,
@@ -142,7 +162,7 @@ class _CampaignLevelCard extends StatelessWidget {
                     const SizedBox(height: 6),
 
                     Text(
-                      description,
+                      level.description,
                       style: TextStyle(
                         color: unlocked ? Colors.white60 : Colors.white30,
                         height: 1.4,
@@ -152,7 +172,7 @@ class _CampaignLevelCard extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     Text(
-                      progress,
+                      progressText,
                       style: TextStyle(
                         color:
                             unlocked ? const Color(0xFFFFD98A) : Colors.white30,

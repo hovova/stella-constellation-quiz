@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+
+import '../models/player_progress.dart';
 import 'home_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final PlayerProgress progress;
+
+  const ProfileScreen({
+    super.key,
+    required this.progress,
+  });
+
+  int get playerLevel {
+    return (progress.totalXp ~/ 1000) + 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,8 +21,8 @@ class ProfileScreen extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: ListView(
-          children: const [
-            Text(
+          children: [
+            const Text(
               'Profile',
               style: TextStyle(
                 fontSize: 34,
@@ -19,32 +30,33 @@ class ProfileScreen extends StatelessWidget {
                 color: Color(0xFFFFD98A),
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'Track your progress, achievements and premium status.',
               style: TextStyle(
                 color: Colors.white60,
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 28),
+            const SizedBox(height: 28),
 
             _ProfileStatCard(
               title: 'Level',
-              value: '1',
+              value: '$playerLevel',
               icon: Icons.trending_up,
             ),
             _ProfileStatCard(
-              title: 'XP',
-              value: '0',
+              title: 'Total XP',
+              value: '${progress.totalXp}',
               icon: Icons.bolt,
             ),
             _ProfileStatCard(
-              title: 'Achievements',
-              value: '0 / 20',
+              title: 'Completed Perfect Levels',
+              value:
+                  '${progress.bestScoresByLevel.values.where((score) => score == 5).length}',
               icon: Icons.emoji_events,
             ),
-            _ProfileStatCard(
+            const _ProfileStatCard(
               title: 'Premium',
               value: 'Inactive',
               icon: Icons.workspace_premium,

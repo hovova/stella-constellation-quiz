@@ -49,6 +49,33 @@ class ConstellationDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
+              Container(
+                height: 220,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10243B),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0x223A5B80)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Image.asset(
+                    constellation.imagePath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Text(
+                          'Constellation image missing',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               _InfoCard(
                 title: 'Difficulty',
                 value: constellation.difficulty,

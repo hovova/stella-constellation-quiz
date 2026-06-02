@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/player_progress.dart';
 import 'home_screen.dart';
 import 'campaign_screen.dart';
 import 'constellations_screen.dart';
@@ -15,14 +16,13 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> {
   int selectedIndex = 0;
+  PlayerProgress progress = PlayerProgress.initial();
 
-  final List<Widget> screens = const [
-    HomeScreen(),
-    CampaignScreen(),
-    ConstellationsScreen(),
-    DuelScreen(),
-    ProfileScreen(),
-  ];
+  void updateProgress(PlayerProgress updatedProgress) {
+    setState(() {
+      progress = updatedProgress;
+    });
+  }
 
   void onTabSelected(int index) {
     setState(() {
@@ -32,6 +32,17 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      const HomeScreen(),
+      CampaignScreen(
+        progress: progress,
+        onProgressUpdated: updateProgress,
+      ),
+      const ConstellationsScreen(),
+      const DuelScreen(),
+      ProfileScreen(progress: progress),
+    ];
+
     return Scaffold(
       body: screens[selectedIndex],
       bottomNavigationBar: NavigationBar(

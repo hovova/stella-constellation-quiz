@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 
-import '../models/constellation.dart';
+import '../models/campaign_level.dart';
+import '../models/player_progress.dart';
 import 'home_screen.dart';
 import 'quiz_screen.dart';
 
 class ResultsScreen extends StatelessWidget {
-  final String title;
+  final CampaignLevel level;
+  final PlayerProgress progress;
   final int score;
   final int totalQuestions;
-  final List<Constellation> constellations;
+  final int xpEarned;
+  final void Function(PlayerProgress updatedProgress) onProgressUpdated;
 
   const ResultsScreen({
     super.key,
-    required this.title,
+    required this.level,
+    required this.progress,
     required this.score,
     required this.totalQuestions,
-    required this.constellations,
+    required this.xpEarned,
+    required this.onProgressUpdated,
   });
 
   int get accuracy {
     return ((score / totalQuestions) * 100).round();
-  }
-
-  int get xpEarned {
-    return score * 10;
   }
 
   @override
@@ -49,7 +50,7 @@ class ResultsScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               Text(
-                title,
+                level.title,
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 16,
@@ -73,6 +74,11 @@ class ResultsScreen extends StatelessWidget {
                 value: '+$xpEarned XP',
                 icon: Icons.bolt,
               ),
+              _ResultCard(
+                title: 'Total XP',
+                value: '${progress.totalXp} XP',
+                icon: Icons.workspace_premium_outlined,
+              ),
 
               const Spacer(),
 
@@ -85,8 +91,9 @@ class ResultsScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => QuizScreen(
-                          title: title,
-                          constellations: constellations,
+                          level: level,
+                          progress: progress,
+                          onProgressUpdated: onProgressUpdated,
                         ),
                       ),
                     );

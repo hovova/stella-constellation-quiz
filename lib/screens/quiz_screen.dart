@@ -4,20 +4,22 @@ import 'package:flutter/material.dart';
 
 import '../data/constellation_data.dart';
 import '../models/constellation.dart';
+import '../models/campaign_level.dart';
+import '../models/player_progress.dart';
 import '../quiz/quiz_question.dart';
 import 'home_screen.dart';
 import 'results_screen.dart';
 
 class QuizScreen extends StatefulWidget {
-  final String title;
-  final List<Constellation> constellations;
-  final int questionCount;
+  final CampaignLevel level;
+  final PlayerProgress progress;
+  final void Function(PlayerProgress updatedProgress) onProgressUpdated;
 
   const QuizScreen({
     super.key,
-    required this.title,
-    required this.constellations,
-    this.questionCount = 5,
+    required this.level,
+    required this.progress,
+    required this.onProgressUpdated,
   });
 
   @override
@@ -40,10 +42,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
   List<QuizQuestion> generateQuestions() {
     final random = Random();
-    final shuffled = [...widget.constellations]..shuffle(random);
+    final shuffled = [...widget.level.constellations]..shuffle(random);
 
     final selectedConstellations = shuffled
-        .take(min(widget.questionCount, widget.constellations.length))
+        .take(min(5, widget.level.constellations.length))
         .toList();
 
     return selectedConstellations.map((correctConstellation) {
@@ -58,12 +60,19 @@ class _QuizScreenState extends State<QuizScreen> {
       ]..shuffle(random);
 
       return QuizQuestion(
-        questionText:
-            'Which constellation is best described as: "${correctConstellation.description}"',
+        questionText: 'Which constellation is shown?',
         correctAnswer: correctConstellation,
         options: options,
       );
     }).toList();
+  }
+
+  int calculateXpEarned() {
+    final correctAnswerXp = score * 100;
+    const completionBonus = 100;
+    final perfectBonus = score == questions.length ? 500 : 0;
+
+    return correctAnswerXp + completionBonus + perfectBonus;
   }
 
   void selectAnswer(Constellation answer) {
@@ -83,17 +92,31 @@ class _QuizScreenState extends State<QuizScreen> {
     final isLastQuestion = currentQuestionIndex == questions.length - 1;
 
     if (isLastQuestion) {
+      final xpEarned = calculateXpEarned();
+
+      final updatedProgress = widget.progress.addQuizResult(
+        levelId: widget.level.id,
+        score: score,
+        totalQuestions: questions.length,
+        xpEarned: xpEarned,
+      );
+
+      widget.onProgressUpdated(updatedProgress);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => ResultsScreen(
-            title: widget.title,
+            level: widget.level,
+            progress: updatedProgress,
             score: score,
             totalQuestions: questions.length,
-            constellations: widget.constellations,
+            xpEarned: xpEarned,
+            onProgressUpdated: widget.onProgressUpdated,
           ),
         ),
       );
+
       return;
     }
 
@@ -122,108 +145,185 @@ class _QuizScreenState extends State<QuizScreen> {
     return const Color(0xFF10243B);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final question = questions[currentQuestionIndex];
-    final progressText = '${currentQuestionIndex + 1} / ${questions.length}';
+@override
+Widget build(BuildContext context) {
+  final question = questions[currentQuestionIndex];
+  final correctConstellation = question.correctAnswer;
+  final progressText = '${currentQuestionIndex + 1} / ${questions.length}';
 
-    return Scaffold(
-      body: StellaGradientScaffold(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconButton(
-                alignment: Alignment.centerLeft,
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-
-              const SizedBox(height: 12),
-
-              Text(
-                widget.title,
-                style: const TextStyle(
-                  color: Color(0xFFFFD98A),
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                'Question $progressText • Score $score',
-                style: const TextStyle(
-                  color: Colors.white54,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              Text(
-                question.questionText,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  height: 1.4,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              ...question.options.map((option) {
-                return Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: getOptionColor(option),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 18,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onPressed: () => selectAnswer(option),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        option.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-              const Spacer(),
-
-              if (hasAnswered)
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: nextQuestion,
-                    child: Text(
-                      currentQuestionIndex == questions.length - 1
-                          ? 'See Results'
-                          : 'Next Question',
-                    ),
-                  ),
-                ),
-            ],
+  Widget answerButton(Constellation option) {
+    return Expanded(
+      child: SizedBox.expand(
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: getOptionColor(option),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 12,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          onPressed: () => selectAnswer(option),
+          child: Text(
+            option.name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
     );
   }
+
+  return Scaffold(
+    body: StellaGradientScaffold(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 34,
+              child: IconButton(
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.zero,
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+
+            const SizedBox(height: 2),
+
+            Text(
+              widget.level.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFFFD98A),
+                fontSize: 23,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text(
+              'Question $progressText • Score $score',
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            LinearProgressIndicator(
+              value: (currentQuestionIndex + 1) / questions.length,
+              minHeight: 4,
+              backgroundColor: const Color(0xFF10243B),
+              color: const Color(0xFFFFD98A),
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              question.questionText,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 21,
+                height: 1.18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10243B),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0x223A5B80),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Image.asset(
+                    correctConstellation.imagePath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Text(
+                          'Constellation image missing',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              height: 190,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        answerButton(question.options[0]),
+                        const SizedBox(width: 12),
+                        answerButton(question.options[1]),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Expanded(
+                    child: Row(
+                      children: [
+                        answerButton(question.options[2]),
+                        const SizedBox(width: 12),
+                        answerButton(question.options[3]),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: hasAnswered ? nextQuestion : null,
+                child: Text(
+                  currentQuestionIndex == questions.length - 1
+                      ? 'See Results'
+                      : 'Next Question',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 }
