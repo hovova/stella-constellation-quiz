@@ -83,7 +83,10 @@ class _RootScreenState extends State<RootScreen> {
     }
 
     final screens = [
-      const HomeScreen(),
+      HomeScreen(
+        progress: progress,
+        onNavigateToCampaign: () => onTabSelected(1),
+      ),
       CampaignScreen(
         progress: progress,
         onProgressUpdated: updateProgress,
