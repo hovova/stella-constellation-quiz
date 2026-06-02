@@ -1,4 +1,4 @@
-package com.example.stella_constellation_quiz
+package package com.mriyainteractive.stella
 
 import io.flutter.embedding.android.FlutterActivity
 
