@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../data/achievements.dart';
 import '../models/player_progress.dart';
-import 'home_screen.dart';
+import '../services/progress_storage_service.dart';
+import '../widgets/achievement_popup.dart';
 import 'campaign_screen.dart';
 import 'constellations_screen.dart';
 import 'duel_screen.dart';
+import 'home_screen.dart';
 import 'profile_screen.dart';
-import '../data/achievements.dart';
-import '../widgets/achievement_popup.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -17,13 +18,48 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
+  final ProgressStorageService storageService = ProgressStorageService();
+
   int selectedIndex = 0;
+  bool isLoading = true;
   PlayerProgress progress = PlayerProgress.initial();
+
+  @override
+  void initState() {
+    super.initState();
+    loadProgress();
+  }
+
+  Future<void> loadProgress() async {
+    final loadedProgress = await storageService.loadProgress();
+
+    setState(() {
+      progress = loadedProgress;
+      isLoading = false;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unlockFirstLoginAchievement();
+    });
+  }
+
+  void unlockFirstLoginAchievement() {
+    if (!progress.hasAchievement(AchievementIds.firstLogin)) {
+      final updatedProgress = progress.unlockAchievement(
+        AchievementIds.firstLogin,
+      );
+
+      updateProgress(updatedProgress);
+      showAchievementPopup(context, firstLoginAchievement);
+    }
+  }
 
   void updateProgress(PlayerProgress updatedProgress) {
     setState(() {
       progress = updatedProgress;
     });
+
+    storageService.saveProgress(updatedProgress);
   }
 
   void onTabSelected(int index) {
@@ -34,6 +70,17 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF071426),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFFFD98A),
+          ),
+        ),
+      );
+    }
+
     final screens = [
       const HomeScreen(),
       CampaignScreen(
@@ -42,27 +89,11 @@ class _RootScreenState extends State<RootScreen> {
       ),
       const ConstellationsScreen(),
       const DuelScreen(),
-      ProfileScreen(progress: progress),
+      ProfileScreen(
+        progress: progress,
+        onProgressUpdated: updateProgress,
+      ),
     ];
-
-    @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!progress.hasAchievement(AchievementIds.firstLogin)) {
-        final updatedProgress = progress.unlockAchievement(
-          AchievementIds.firstLogin,
-        );
-
-        setState(() {
-          progress = updatedProgress;
-        });
-
-        showAchievementPopup(context, firstLoginAchievement);
-      }
-    });
-  }
 
     return Scaffold(
       body: screens[selectedIndex],

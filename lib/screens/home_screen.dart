@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/premium_banner.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const StellaGradientScaffold(
+    return StellaGradientScaffold(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Text(
-                'Mriya Interactive',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 12,
-                  letterSpacing: 1.4,
+          children: const [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Mriya Interactive',
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 12,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+                PremiumBanner(),
+              ],
             ),
 
             Spacer(),
@@ -76,7 +82,7 @@ class HomeScreen extends StatelessWidget {
 
             _HomeActionCard(
               title: 'Premium',
-              subtitle: 'Remove ads and unlock offline quizzes.',
+              subtitle: 'Compare No Ads and Full Premium.',
               icon: Icons.workspace_premium_outlined,
             ),
 

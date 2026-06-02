@@ -122,12 +122,18 @@ void handleTimeout() {
   }
 
   int calculateXpEarned() {
-    final correctAnswerXp = score * 100;
-    const completionBonus = 100;
-    final perfectBonus = score == questions.length ? 500 : 0;
+  final minimumMeaningfulScore = (questions.length / 2).ceil();
 
-    return correctAnswerXp + completionBonus + perfectBonus;
+  if (score < minimumMeaningfulScore) {
+    return 0;
   }
+
+  final correctAnswerXp = score * 10;
+  const completionBonus = 20;
+  final perfectBonus = score == questions.length ? 30 : 0;
+
+  return correctAnswerXp + completionBonus + perfectBonus;
+}
 
   void selectAnswer(Constellation answer) {
     if (hasAnswered) return;
