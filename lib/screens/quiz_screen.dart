@@ -1,6 +1,9 @@
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+
 
 import '../data/constellation_data.dart';
 import '../models/constellation.dart';
@@ -29,16 +32,67 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   late final List<QuizQuestion> questions;
 
+  static const int secondsPerQuestion = 15;
+  static const int startingLives = 3;
+
   int currentQuestionIndex = 0;
   int score = 0;
+  int lives = startingLives;
+  int secondsLeft = secondsPerQuestion;
+
+  Timer? questionTimer;
   Constellation? selectedAnswer;
   bool hasAnswered = false;
-
+  bool timedOut = false;
+  
   @override
   void initState() {
     super.initState();
     questions = generateQuestions();
+    startQuestionTimer();
   }
+
+@override
+void dispose() {
+  questionTimer?.cancel();
+  super.dispose();
+}
+
+void startQuestionTimer() {
+  questionTimer?.cancel();
+
+  setState(() {
+    secondsLeft = secondsPerQuestion;
+    timedOut = false;
+  });
+
+  questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (!mounted || hasAnswered) {
+      timer.cancel();
+      return;
+    }
+
+    if (secondsLeft <= 1) {
+      timer.cancel();
+      handleTimeout();
+      return;
+    }
+
+    setState(() {
+      secondsLeft--;
+    });
+  });
+}
+
+void handleTimeout() {
+  if (hasAnswered) return;
+
+  setState(() {
+    hasAnswered = true;
+    timedOut = true;
+    lives--;
+  });
+}
 
   List<QuizQuestion> generateQuestions() {
     final random = Random();
@@ -78,20 +132,30 @@ class _QuizScreenState extends State<QuizScreen> {
   void selectAnswer(Constellation answer) {
     if (hasAnswered) return;
 
+    questionTimer?.cancel();
+
+    final isCorrect =
+        answer.id == questions[currentQuestionIndex].correctAnswer.id;
+
     setState(() {
       selectedAnswer = answer;
       hasAnswered = true;
 
-      if (answer.id == questions[currentQuestionIndex].correctAnswer.id) {
+      if (isCorrect) {
         score++;
+      } else {
+        lives--;
       }
     });
   }
 
-  void nextQuestion() {
+    void nextQuestion() {
     final isLastQuestion = currentQuestionIndex == questions.length - 1;
+    final isOutOfLives = lives <= 0;
 
-    if (isLastQuestion) {
+    if (isLastQuestion || isOutOfLives) {
+      questionTimer?.cancel();
+
       final xpEarned = calculateXpEarned();
 
       final updatedProgress = widget.progress.addQuizResult(
@@ -124,7 +188,10 @@ class _QuizScreenState extends State<QuizScreen> {
       currentQuestionIndex++;
       selectedAnswer = null;
       hasAnswered = false;
+      timedOut = false;
     });
+
+    startQuestionTimer();
   }
 
   Color getOptionColor(Constellation option) {
@@ -214,13 +281,51 @@ Widget build(BuildContext context) {
 
             const SizedBox(height: 5),
 
-            Text(
-              'Question $progressText • Score $score',
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 14,
-              ),
+                  Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Question $progressText • Score $score',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 14,
             ),
+          ),
+          Row(
+            children: [
+              const Icon(
+                Icons.favorite,
+                color: Color(0xFFFF6B6B),
+                size: 17,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$lives',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Icon(
+                Icons.timer_outlined,
+                color: Color(0xFFFFD98A),
+                size: 17,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${secondsLeft}s',
+                style: TextStyle(
+                  color: secondsLeft <= 5
+                      ? const Color(0xFFFF6B6B)
+                      : Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
 
             const SizedBox(height: 10),
 
@@ -246,6 +351,17 @@ Widget build(BuildContext context) {
             ),
 
             const SizedBox(height: 10),
+
+          if (timedOut) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Time is up! You lost 1 life.',
+              style: TextStyle(
+                color: Color(0xFFFF6B6B),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
 
             Expanded(
               child: Container(
@@ -313,10 +429,10 @@ Widget build(BuildContext context) {
               height: 48,
               child: FilledButton(
                 onPressed: hasAnswered ? nextQuestion : null,
-                child: Text(
-                  currentQuestionIndex == questions.length - 1
-                      ? 'See Results'
-                      : 'Next Question',
+                  child: Text(
+                    lives <= 0 || currentQuestionIndex == questions.length - 1
+                        ? 'See Results'
+                        : 'Next Question',
                 ),
               ),
             ),
