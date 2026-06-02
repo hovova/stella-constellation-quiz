@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../data/achievements.dart';
 import '../models/player_progress.dart';
-import '../screens/premium_screen.dart';
 import '../widgets/premium_banner.dart';
+import 'achievements_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final PlayerProgress progress;
@@ -14,15 +14,6 @@ class HomeScreen extends StatelessWidget {
     required this.progress,
     required this.onNavigateToCampaign,
   });
-
-  void openPremiumMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => const PremiumScreen(),
-    );
-  }
 
   void showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -36,6 +27,15 @@ class HomeScreen extends StatelessWidget {
           'Daily Challenge is coming soon.',
           style: TextStyle(color: Colors.white),
         ),
+      ),
+    );
+  }
+
+    void openAchievements(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AchievementsScreen(progress: progress),
       ),
     );
   }
@@ -123,20 +123,12 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            _AchievementProgressCard(
-              unlockedAchievements: unlockedAchievements,
-              totalAchievements: totalAchievements,
-              progress: achievementProgress,
-            ),
-
-            const SizedBox(height: 14),
-
-            _HomeActionCard(
-              title: 'Upgrade Stella',
-              subtitle: 'Compare No Ads and Full Premium.',
-              icon: Icons.workspace_premium_outlined,
-              onTap: () => openPremiumMenu(context),
-            ),
+          _AchievementProgressCard(
+            unlockedAchievements: unlockedAchievements,
+            totalAchievements: totalAchievements,
+            progress: achievementProgress,
+            onTap: () => openAchievements(context),
+          ),
 
             const Spacer(),
 
@@ -160,11 +152,13 @@ class _AchievementProgressCard extends StatelessWidget {
   final int unlockedAchievements;
   final int totalAchievements;
   final double progress;
+  final VoidCallback onTap;
 
   const _AchievementProgressCard({
     required this.unlockedAchievements,
     required this.totalAchievements,
     required this.progress,
+    required this.onTap,
   });
 
   @override
@@ -177,61 +171,70 @@ class _AchievementProgressCard extends StatelessWidget {
           color: Color(0x223A5B80),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.emoji_events_outlined,
-                  color: Color(0xFFFFD98A),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    'Achievement Progress',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.emoji_events_outlined,
+                    color: Color(0xFFFFD98A),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text(
+                      'Achievement Progress',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  '$unlockedAchievements / $totalAchievements',
-                  style: const TextStyle(
-                    color: Color(0xFFFFD98A),
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '$unlockedAchievements / $totalAchievements',
+                    style: const TextStyle(
+                      color: Color(0xFFFFD98A),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.white38,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 9,
+                  backgroundColor: const Color(0xFF071426),
+                  color: const Color(0xFFFFD98A),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 9,
-                backgroundColor: const Color(0xFF071426),
-                color: const Color(0xFFFFD98A),
               ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-            const Text(
-              'Unlock achievements by completing quizzes, earning Gold Awards, and mastering the sky.',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
-                height: 1.4,
+              const Text(
+                'Tap to view your achievements, rewards, and locked badges.',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
