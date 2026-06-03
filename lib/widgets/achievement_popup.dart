@@ -11,7 +11,11 @@ void showAchievementPopup(
   Achievement achievement, {
   required String languageCode,
 }) {
-  unawaited(StellaAudioService.playAchievementUnlock());
+  final shouldPlayAchievementSound = achievement.id != 'first_login';
+
+  if (shouldPlayAchievementSound) {
+    unawaited(StellaAudioService.playAchievementUnlock());
+  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(

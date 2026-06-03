@@ -29,6 +29,38 @@ class StellaAudioService {
     return AssetSource(assetPath);
   }
 
+  static Future<void> configureMusicPlayer(AudioPlayer player) async {
+    if (kIsWeb) {
+      return;
+    }
+
+    try {
+      await player.setAudioContext(
+        AudioContextConfig(
+          focus: AudioContextConfigFocus.gain,
+        ).build(),
+      );
+    } catch (error) {
+      debugPrint('MUSIC AUDIO CONTEXT ERROR: $error');
+    }
+  }
+
+  static Future<void> configureSfxPlayer(AudioPlayer player) async {
+    if (kIsWeb) {
+      return;
+    }
+
+    try {
+      await player.setAudioContext(
+        AudioContextConfig(
+          focus: AudioContextConfigFocus.mixWithOthers,
+        ).build(),
+      );
+    } catch (error) {
+      debugPrint('SFX AUDIO CONTEXT ERROR: $error');
+    }
+  }
+
   static Future<void> initialiseMusic() async {
     if (_musicInitialised) {
       return;
@@ -37,6 +69,7 @@ class StellaAudioService {
     _musicInitialised = true;
 
     try {
+      await configureMusicPlayer(_musicPlayer);
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_musicVolume);
     } catch (error) {
@@ -190,6 +223,7 @@ class StellaAudioService {
     unawaited(
       () async {
         try {
+          await configureSfxPlayer(player);
           await player.setReleaseMode(ReleaseMode.stop);
           await player.setVolume(
             (_sfxVolume * volumeMultiplier).clamp(0.0, 1.0),
@@ -233,6 +267,7 @@ class StellaAudioService {
             await _musicPlayer.setVolume(0.02);
           }
 
+          await configureSfxPlayer(player);
           await player.setReleaseMode(ReleaseMode.stop);
           await player.setVolume(_sfxVolume);
 
