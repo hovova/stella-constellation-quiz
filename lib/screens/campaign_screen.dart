@@ -2,10 +2,15 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../data/app_text.dart';
 import '../data/campaign_levels.dart';
+import '../data/constellation_data.dart';
 import '../models/campaign_level.dart';
 import '../models/player_progress.dart';
+import '../services/audio_service.dart';
 import 'home_screen.dart';
+import 'match_challenge_screen.dart';
+import 'mythology_quiz_screen.dart';
 import 'premium_screen.dart';
 import 'quiz_screen.dart';
 
@@ -18,6 +23,14 @@ class CampaignScreen extends StatelessWidget {
     required this.progress,
     required this.onProgressUpdated,
   });
+
+  String text(String key) {
+    return AppText.get(progress.selectedLanguageCode, key);
+  }
+
+  String translatedLevelTitle(CampaignLevel level) {
+    return text('level${level.levelNumber}Title');
+  }
 
   int expectedQuestionsForLevel(CampaignLevel level) {
     return min(5, level.constellations.length);
@@ -51,6 +64,13 @@ class CampaignScreen extends StatelessWidget {
     );
   }
 
+  int campaignGoldAwardCount() {
+    return campaignLevels.where((level) {
+      final totalQuestions = expectedQuestionsForLevel(level);
+      return progress.hasGoldAward(level.id, totalQuestions);
+    }).length;
+  }
+
   int latestUnlockedLevelNumber() {
     int latest = 1;
 
@@ -64,12 +84,15 @@ class CampaignScreen extends StatelessWidget {
   }
 
   void startLevel(BuildContext context, CampaignLevel level) {
+    StellaAudioService.playButtonTap();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => _LevelModeSheet(
         level: level,
+        languageCode: progress.selectedLanguageCode,
         onClassicTap: () {
           Navigator.pop(context);
 
@@ -86,26 +109,90 @@ class CampaignScreen extends StatelessWidget {
         },
         onMythologyTap: () {
           Navigator.pop(context);
-          openPremiumMenu(context);
+
+          if (!progress.hasPremium) {
+            openPremiumMenu(context);
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MythologyQuizScreen(
+                level: level,
+                progress: progress,
+                onProgressUpdated: onProgressUpdated,
+              ),
+            ),
+          );
         },
         onAll88Tap: () {
           Navigator.pop(context);
-          openPremiumMenu(context);
+
+          if (!progress.hasPremium) {
+            openPremiumMenu(context);
+            return;
+          }
+
+          final all88Level = CampaignLevel(
+            id: 'all_88_challenge',
+            title: 'All 88 Challenge',
+            description: 'Master every official constellation.',
+            levelNumber: 88,
+            requiredXp: 0,
+            previousLevelId: null,
+            constellations: allConstellations,
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => QuizScreen(
+                level: all88Level,
+                progress: progress,
+                onProgressUpdated: onProgressUpdated,
+              ),
+            ),
+          );
         },
         onMatchModeTap: () {
           Navigator.pop(context);
-          openPremiumMenu(context);
+
+          if (!progress.hasPremium) {
+            openPremiumMenu(context);
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MatchChallengeScreen(
+                titleKey: 'matchMode',
+                constellations: level.constellations,
+                progress: progress,
+                campaignLevel: level,
+                onProgressUpdated: onProgressUpdated,
+                countForCampaignProgress: true,
+              ),
+            ),
+          );
         },
       ),
     );
   }
 
   void openPremiumMenu(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const PremiumScreen(),
+      builder: (_) => PremiumScreen(
+        languageCode: progress.selectedLanguageCode,
+        progress: progress,
+        onProgressUpdated: onProgressUpdated,
+      ),
     );
   }
 
@@ -118,9 +205,9 @@ class CampaignScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: ListView(
           children: [
-            const Text(
-              'Campaign',
-              style: TextStyle(
+            Text(
+              text('campaign'),
+              style: const TextStyle(
                 fontSize: 34,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFFD98A),
@@ -138,7 +225,7 @@ class CampaignScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${progress.totalXp} XP',
+                  '${progress.totalXp} ${text('xp')}',
                   style: const TextStyle(
                     color: Color(0xFFFFD98A),
                     fontWeight: FontWeight.bold,
@@ -152,7 +239,7 @@ class CampaignScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${progress.goldAwardCount(5)} Gold',
+                  '${campaignGoldAwardCount()} ${text('gold')}',
                   style: const TextStyle(
                     color: Colors.white60,
                     fontWeight: FontWeight.w600,
@@ -163,9 +250,9 @@ class CampaignScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            const Text(
-              'Move through the sky path. Tap a level to choose a quiz mode and begin.',
-              style: TextStyle(
+            Text(
+              text('campaignDescription'),
+              style: const TextStyle(
                 color: Colors.white60,
                 height: 1.5,
               ),
@@ -187,6 +274,8 @@ class CampaignScreen extends StatelessWidget {
                 alignLeft: alignLeft,
                 bestScore: progress.bestScoresByLevel[level.id] ?? 0,
                 totalQuestions: expectedQuestionsForLevel(level),
+                languageCode: progress.selectedLanguageCode,
+                translatedTitle: translatedLevelTitle(level),
                 onTap: unlocked ? () => startLevel(context, level) : null,
               );
             }),
@@ -199,6 +288,7 @@ class CampaignScreen extends StatelessWidget {
 
 class _LevelModeSheet extends StatelessWidget {
   final CampaignLevel level;
+  final String languageCode;
   final VoidCallback onClassicTap;
   final VoidCallback onMythologyTap;
   final VoidCallback onAll88Tap;
@@ -206,11 +296,20 @@ class _LevelModeSheet extends StatelessWidget {
 
   const _LevelModeSheet({
     required this.level,
+    required this.languageCode,
     required this.onClassicTap,
     required this.onMythologyTap,
     required this.onAll88Tap,
     required this.onMatchModeTap,
   });
+
+  String text(String key) {
+    return AppText.get(languageCode, key);
+  }
+
+  String translatedLevelTitle() {
+    return AppText.get(languageCode, 'level${level.levelNumber}Title');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +332,7 @@ class _LevelModeSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      level.title,
+                      translatedLevelTitle(),
                       style: const TextStyle(
                         color: Color(0xFFFFD98A),
                         fontSize: 28,
@@ -242,7 +341,10 @@ class _LevelModeSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      StellaAudioService.playButtonTap();
+                      Navigator.pop(context);
+                    },
                     icon: const Icon(
                       Icons.close,
                       color: Colors.white70,
@@ -254,7 +356,7 @@ class _LevelModeSheet extends StatelessWidget {
               const SizedBox(height: 6),
 
               Text(
-                '$constellationCount constellations available in this level.',
+                '$constellationCount ${text('availableInLevel')}',
                 style: const TextStyle(
                   color: Colors.white60,
                   height: 1.4,
@@ -263,9 +365,9 @@ class _LevelModeSheet extends StatelessWidget {
 
               const SizedBox(height: 22),
 
-              const Text(
-                'Choose Quiz Mode',
-                style: TextStyle(
+              Text(
+                text('chooseQuizMode'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -275,8 +377,8 @@ class _LevelModeSheet extends StatelessWidget {
               const SizedBox(height: 14),
 
               _LevelModeOption(
-                title: 'Classic Quiz',
-                subtitle: 'Identify constellations from their images.',
+                title: text('classicQuiz'),
+                subtitle: text('classicQuizSubtitle'),
                 icon: Icons.auto_awesome,
                 premium: false,
                 onTap: onClassicTap,
@@ -285,8 +387,8 @@ class _LevelModeSheet extends StatelessWidget {
               const SizedBox(height: 12),
 
               _LevelModeOption(
-                title: 'Mythology',
-                subtitle: 'Premium mode • Learn the stories behind the stars.',
+                title: text('mythology'),
+                subtitle: text('mythologySubtitle'),
                 icon: Icons.menu_book,
                 premium: true,
                 onTap: onMythologyTap,
@@ -295,8 +397,8 @@ class _LevelModeSheet extends StatelessWidget {
               const SizedBox(height: 12),
 
               _LevelModeOption(
-                title: 'All 88 Challenge',
-                subtitle: 'Premium mode • Master every official constellation.',
+                title: text('all88Challenge'),
+                subtitle: text('all88ChallengeSubtitle'),
                 icon: Icons.public,
                 premium: true,
                 onTap: onAll88Tap,
@@ -305,8 +407,8 @@ class _LevelModeSheet extends StatelessWidget {
               const SizedBox(height: 12),
 
               _LevelModeOption(
-                title: 'Match Mode',
-                subtitle: 'Premium mode • Match pictures with names.',
+                title: text('matchMode'),
+                subtitle: text('matchModeSubtitle'),
                 icon: Icons.grid_view,
                 premium: true,
                 onTap: onMatchModeTap,
@@ -347,7 +449,10 @@ class _LevelModeOption extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          StellaAudioService.playButtonTap();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(18),
@@ -423,6 +528,8 @@ class _CampaignMapNode extends StatelessWidget {
   final bool alignLeft;
   final int bestScore;
   final int totalQuestions;
+  final String languageCode;
+  final String translatedTitle;
   final VoidCallback? onTap;
 
   const _CampaignMapNode({
@@ -433,21 +540,27 @@ class _CampaignMapNode extends StatelessWidget {
     required this.alignLeft,
     required this.bestScore,
     required this.totalQuestions,
+    required this.languageCode,
+    required this.translatedTitle,
     this.onTap,
   });
+
+  String text(String key) {
+    return AppText.get(languageCode, key);
+  }
 
   @override
   Widget build(BuildContext context) {
     final constellationCount = level.constellations.length;
 
     final statusText = gold
-        ? 'Gold Award • Perfect score'
+        ? '${text('goldAward')} • ${text('perfectScore')}'
         : unlocked
-            ? 'Best: $bestScore / $totalQuestions • $constellationCount constellations'
-            : 'Locked • ${level.requiredXp} XP or 100% previous';
+            ? '${text('best')}: $bestScore / $totalQuestions • $constellationCount ${text('constellations')}'
+            : '${text('locked')} • ${level.requiredXp} ${text('xp')} ${text('or100Previous')}';
 
     final node = InkWell(
-      onTap: unlocked ? onTap : null,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(28),
       child: Container(
         width: 270,
@@ -526,7 +639,7 @@ class _CampaignMapNode extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    level.title,
+                    translatedTitle,
                     style: TextStyle(
                       color: unlocked ? Colors.white : Colors.white38,
                       fontSize: 17,

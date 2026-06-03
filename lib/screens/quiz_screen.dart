@@ -1,17 +1,17 @@
-import 'dart:math';
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-
-
+import '../data/app_text.dart';
 import '../data/constellation_data.dart';
-import '../models/constellation.dart';
 import '../models/campaign_level.dart';
+import '../models/constellation.dart';
 import '../models/player_progress.dart';
 import '../quiz/quiz_question.dart';
 import 'home_screen.dart';
 import 'results_screen.dart';
+import '../services/audio_service.dart';
 
 class QuizScreen extends StatefulWidget {
   final CampaignLevel level;
@@ -44,47 +44,65 @@ class _QuizScreenState extends State<QuizScreen> {
   Constellation? selectedAnswer;
   bool hasAnswered = false;
   bool timedOut = false;
-  
+
+  String text(String key) {
+    return AppText.get(widget.progress.selectedLanguageCode, key);
+  }
+
+  String translatedLevelTitle() {
+    if (widget.level.id == 'all_88_challenge') {
+      return text('all88Challenge');
+    }
+
+    return AppText.get(
+      widget.progress.selectedLanguageCode,
+      'level${widget.level.levelNumber}Title',
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     questions = generateQuestions();
     startQuestionTimer();
+    StellaAudioService.pauseMusicForGame();
   }
 
-@override
-void dispose() {
-  questionTimer?.cancel();
-  super.dispose();
-}
+  @override
+  void dispose() {
+    questionTimer?.cancel();
+    StellaAudioService.resumeMusicForMenu();
+    super.dispose();
+    
+  }
 
-void startQuestionTimer() {
-  questionTimer?.cancel();
-
-  setState(() {
-    secondsLeft = secondsPerQuestion;
-    timedOut = false;
-  });
-
-  questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    if (!mounted || hasAnswered) {
-      timer.cancel();
-      return;
-    }
-
-    if (secondsLeft <= 1) {
-      timer.cancel();
-      handleTimeout();
-      return;
-    }
+  void startQuestionTimer() {
+    questionTimer?.cancel();
 
     setState(() {
-      secondsLeft--;
+      secondsLeft = secondsPerQuestion;
+      timedOut = false;
     });
-  });
-}
 
-void handleTimeout() {
+    questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || hasAnswered) {
+        timer.cancel();
+        return;
+      }
+
+      if (secondsLeft <= 1) {
+        timer.cancel();
+        handleTimeout();
+        return;
+      }
+
+      setState(() {
+        secondsLeft--;
+      });
+    });
+  }
+
+  void handleTimeout() {
   if (hasAnswered) return;
 
   setState(() {
@@ -92,15 +110,19 @@ void handleTimeout() {
     timedOut = true;
     lives--;
   });
+
+  StellaAudioService.playWrongAnswer();
 }
 
   List<QuizQuestion> generateQuestions() {
     final random = Random();
     final shuffled = [...widget.level.constellations]..shuffle(random);
 
-    final selectedConstellations = shuffled
-        .take(min(5, widget.level.constellations.length))
-        .toList();
+    final questionCount = widget.level.id == 'all_88_challenge'
+        ? widget.level.constellations.length
+        : min(5, widget.level.constellations.length);
+
+    final selectedConstellations = shuffled.take(questionCount).toList();
 
     return selectedConstellations.map((correctConstellation) {
       final wrongOptions = allConstellations
@@ -114,7 +136,7 @@ void handleTimeout() {
       ]..shuffle(random);
 
       return QuizQuestion(
-        questionText: 'Which constellation is shown?',
+        questionText: 'whichConstellationShown',
         correctAnswer: correctConstellation,
         options: options,
       );
@@ -122,40 +144,46 @@ void handleTimeout() {
   }
 
   int calculateXpEarned() {
-  final minimumMeaningfulScore = (questions.length / 2).ceil();
+    final minimumMeaningfulScore = (questions.length / 2).ceil();
 
-  if (score < minimumMeaningfulScore) {
-    return 0;
+    if (score < minimumMeaningfulScore) {
+      return 0;
+    }
+
+    final correctAnswerXp = score * 10;
+    const completionBonus = 20;
+    final perfectBonus = score == questions.length ? 30 : 0;
+
+    return correctAnswerXp + completionBonus + perfectBonus;
   }
-
-  final correctAnswerXp = score * 10;
-  const completionBonus = 20;
-  final perfectBonus = score == questions.length ? 30 : 0;
-
-  return correctAnswerXp + completionBonus + perfectBonus;
-}
 
   void selectAnswer(Constellation answer) {
-    if (hasAnswered) return;
+  if (hasAnswered) return;
 
-    questionTimer?.cancel();
+  questionTimer?.cancel();
 
-    final isCorrect =
-        answer.id == questions[currentQuestionIndex].correctAnswer.id;
+  final isCorrect =
+      answer.id == questions[currentQuestionIndex].correctAnswer.id;
 
-    setState(() {
-      selectedAnswer = answer;
-      hasAnswered = true;
+  setState(() {
+    selectedAnswer = answer;
+    hasAnswered = true;
 
-      if (isCorrect) {
-        score++;
-      } else {
-        lives--;
-      }
-    });
+    if (isCorrect) {
+      score++;
+    } else {
+      lives--;
+    }
+  });
+
+  if (isCorrect) {
+    StellaAudioService.playCorrectAnswer();
+  } else {
+    StellaAudioService.playWrongAnswer();
   }
+}
 
-    void nextQuestion() {
+  void nextQuestion() {
     final isLastQuestion = currentQuestionIndex == questions.length - 1;
     final isOutOfLives = lives <= 0;
 
@@ -218,234 +246,237 @@ void handleTimeout() {
     return const Color(0xFF10243B);
   }
 
-@override
-Widget build(BuildContext context) {
-  final question = questions[currentQuestionIndex];
-  final correctConstellation = question.correctAnswer;
-  final progressText = '${currentQuestionIndex + 1} / ${questions.length}';
+  @override
+  Widget build(BuildContext context) {
+    final question = questions[currentQuestionIndex];
+    final correctConstellation = question.correctAnswer;
+    final progressText = '${currentQuestionIndex + 1} / ${questions.length}';
 
-  Widget answerButton(Constellation option) {
-    return Expanded(
-      child: SizedBox.expand(
-        child: FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: getOptionColor(option),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 12,
+    Widget answerButton(Constellation option) {
+      return Expanded(
+        child: SizedBox.expand(
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: getOptionColor(option),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+            onPressed: () => selectAnswer(option),
+            child: Text(
+              option.nameFor(widget.progress.selectedLanguageCode),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-          onPressed: () => selectAnswer(option),
-          child: Text(
-            option.name,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: StellaGradientScaffold(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 34,
+                child: IconButton(
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    StellaAudioService.playButtonTap();
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                translatedLevelTitle(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFFFD98A),
+                  fontSize: 23,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${text('question')} $progressText • ${text('score')} $score',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.favorite,
+                        color: Color(0xFFFF6B6B),
+                        size: 17,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$lives',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Icon(
+                        Icons.timer_outlined,
+                        color: Color(0xFFFFD98A),
+                        size: 17,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$secondsLeft${text('secondsShort')}',
+                        style: TextStyle(
+                          color: secondsLeft <= 5
+                              ? const Color(0xFFFF6B6B)
+                              : Colors.white70,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              LinearProgressIndicator(
+                value: (currentQuestionIndex + 1) / questions.length,
+                minHeight: 4,
+                backgroundColor: const Color(0xFF10243B),
+                color: const Color(0xFFFFD98A),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                text(question.questionText),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 21,
+                  height: 1.18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              if (timedOut) ...[
+                const SizedBox(height: 8),
+                Text(
+                  text('timeIsUp'),
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B6B),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10243B),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0x223A5B80),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Image.asset(
+                      correctConstellation.imagePath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Text(
+                            text('constellationImageMissing'),
+                            style: const TextStyle(color: Colors.white54),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                height: 190,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          answerButton(question.options[0]),
+                          const SizedBox(width: 12),
+                          answerButton(question.options[1]),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Expanded(
+                      child: Row(
+                        children: [
+                          answerButton(question.options[2]),
+                          const SizedBox(width: 12),
+                          answerButton(question.options[3]),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  onPressed: hasAnswered ? nextQuestion : null,
+                  child: Text(
+                    lives <= 0 || currentQuestionIndex == questions.length - 1
+                        ? text('seeResults')
+                        : text('nextQuestion'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  return Scaffold(
-    body: StellaGradientScaffold(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 34,
-              child: IconButton(
-                alignment: Alignment.centerLeft,
-                padding: EdgeInsets.zero,
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-            ),
-
-            const SizedBox(height: 2),
-
-            Text(
-              widget.level.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFFFD98A),
-                fontSize: 23,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 5),
-
-                  Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Question $progressText • Score $score',
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 14,
-            ),
-          ),
-          Row(
-            children: [
-              const Icon(
-                Icons.favorite,
-                color: Color(0xFFFF6B6B),
-                size: 17,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '$lives',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 14),
-              const Icon(
-                Icons.timer_outlined,
-                color: Color(0xFFFFD98A),
-                size: 17,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${secondsLeft}s',
-                style: TextStyle(
-                  color: secondsLeft <= 5
-                      ? const Color(0xFFFF6B6B)
-                      : Colors.white70,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-
-            const SizedBox(height: 10),
-
-            LinearProgressIndicator(
-              value: (currentQuestionIndex + 1) / questions.length,
-              minHeight: 4,
-              backgroundColor: const Color(0xFF10243B),
-              color: const Color(0xFFFFD98A),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              question.questionText,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 21,
-                height: 1.18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-          if (timedOut) ...[
-            const SizedBox(height: 8),
-            const Text(
-              'Time is up! You lost 1 life.',
-              style: TextStyle(
-                color: Color(0xFFFF6B6B),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10243B),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0x223A5B80),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Image.asset(
-                    correctConstellation.imagePath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Text(
-                          'Constellation image missing',
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            SizedBox(
-              height: 190,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        answerButton(question.options[0]),
-                        const SizedBox(width: 12),
-                        answerButton(question.options[1]),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Expanded(
-                    child: Row(
-                      children: [
-                        answerButton(question.options[2]),
-                        const SizedBox(width: 12),
-                        answerButton(question.options[3]),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: hasAnswered ? nextQuestion : null,
-                  child: Text(
-                    lives <= 0 || currentQuestionIndex == questions.length - 1
-                        ? 'See Results'
-                        : 'Next Question',
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
 }

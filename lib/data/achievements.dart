@@ -5,6 +5,7 @@ class AchievementIds {
   static const firstQuiz = 'first_quiz';
   static const goldStargazer = 'gold_stargazer';
   static const diamondSkyMaster = 'diamond_sky_master';
+  static const sevenDayLogin = 'seven_day_login';
 }
 
 const Achievement firstLoginAchievement = Achievement(
@@ -35,9 +36,17 @@ const Achievement diamondSkyMasterAchievement = Achievement(
   emoji: '💎',
 );
 
+const Achievement sevenDayLoginAchievement = Achievement(
+  id: AchievementIds.sevenDayLogin,
+  title: '7-Day Stargazer',
+  description: 'Log in for 7 days in a row and unlock a special avatar frame.',
+  emoji: '📅',
+);
+
 const List<Achievement> allAchievements = [
   firstLoginAchievement,
   firstQuizAchievement,
   goldStargazerAchievement,
   diamondSkyMasterAchievement,
+  sevenDayLoginAchievement,
 ];

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../data/achievements.dart';
+import '../data/app_text.dart';
 import '../data/campaign_levels.dart';
 import '../models/achievement.dart';
 import '../models/campaign_level.dart';
 import '../models/player_progress.dart';
+import '../services/ad_service.dart';
+import '../services/audio_service.dart';
 import '../widgets/achievement_popup.dart';
 import 'home_screen.dart';
 import 'quiz_screen.dart';
+import '../services/interstitial_ad_service.dart';
 
 class ResultsScreen extends StatefulWidget {
   final CampaignLevel level;
@@ -34,15 +38,35 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late PlayerProgress visibleProgress;
 
-  @override
-  void initState() {
-    super.initState();
-    visibleProgress = widget.progress;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unlockResultAchievements();
-    });
+  String text(String key) {
+    return AppText.get(visibleProgress.selectedLanguageCode, key);
   }
+
+  String translatedLevelTitle() {
+    if (widget.level.id == 'all_88_challenge') {
+      return text('all88Challenge');
+    }
+
+    return AppText.get(
+      visibleProgress.selectedLanguageCode,
+      'level${widget.level.levelNumber}Title',
+    );
+  }
+
+@override
+void initState() {
+  super.initState();
+  visibleProgress = widget.progress;
+
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    unlockResultAchievements();
+
+    if (AdService.shouldShowInterstitialAfterLevel(visibleProgress)) {
+      await Future.delayed(const Duration(milliseconds: 900));
+      await StellaInterstitialAdService.showInterstitialAdIfReady();
+    }
+  });
+}
 
   int get accuracy {
     return ((widget.score / widget.totalQuestions) * 100).round();
@@ -72,7 +96,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
 
     final totalCampaignLevels = campaignLevels.length;
-    final goldAwards = updatedProgress.goldAwardCount(widget.totalQuestions);
+
+    final goldAwards = campaignLevels.where((level) {
+      final totalQuestions =
+          level.constellations.length < 5 ? level.constellations.length : 5;
+
+      return updatedProgress.hasGoldAward(level.id, totalQuestions);
+    }).length;
 
     if (goldAwards == totalCampaignLevels &&
         !updatedProgress.hasAchievement(AchievementIds.diamondSkyMaster)) {
@@ -91,23 +121,47 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
 
     for (final achievement in achievementsToShow) {
-      showAchievementPopup(context, achievement);
+      showAchievementPopup(
+        context,
+        achievement,
+        languageCode: visibleProgress.selectedLanguageCode,
+      );
     }
+  }
+
+  void retryQuiz() {
+    StellaAudioService.playButtonTap();
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizScreen(
+          level: widget.level,
+          progress: visibleProgress,
+          onProgressUpdated: widget.onProgressUpdated,
+        ),
+      ),
+    );
+  }
+
+  void backToCampaign() {
+    StellaAudioService.playButtonTap();
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: StellaGradientScaffold(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
             children: [
-              const Spacer(),
+              const SizedBox(height: 28),
 
               Text(
-                gotGoldAward ? 'Gold Award Earned' : 'Quiz Complete',
+                gotGoldAward ? text('goldAwardEarned') : text('quizComplete'),
                 style: const TextStyle(
                   color: Color(0xFFFFD98A),
                   fontSize: 38,
@@ -118,7 +172,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               const SizedBox(height: 12),
 
               Text(
-                widget.level.title,
+                translatedLevelTitle(),
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 16,
@@ -137,32 +191,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       color: Color(0xFFFFD98A),
                     ),
                   ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
                     child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.workspace_premium,
                           color: Color(0xFFFFD98A),
                           size: 42,
                         ),
-                        SizedBox(width: 16),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Gold Award',
-                                style: TextStyle(
+                                text('goldAward'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                'Perfect score achieved on this level.',
-                                style: TextStyle(
+                                text('perfectScore'),
+                                style: const TextStyle(
                                   color: Colors.white60,
                                   height: 1.4,
                                 ),
@@ -176,51 +230,39 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
 
               _ResultCard(
-                title: 'Score',
+                title: text('score'),
                 value: '${widget.score} / ${widget.totalQuestions}',
                 icon: Icons.check_circle_outline,
               ),
               _ResultCard(
-                title: 'Accuracy',
+                title: text('accuracy'),
                 value: '$accuracy%',
                 icon: Icons.analytics_outlined,
               ),
               _ResultCard(
-                title: 'XP Earned',
-                value: '+${widget.xpEarned} XP',
+                title: text('xpEarned'),
+                value: '+${widget.xpEarned} ${text('xp')}',
                 icon: Icons.bolt,
               ),
               _ResultCard(
-                title: 'Total XP',
-                value: '${visibleProgress.totalXp} XP',
+                title: text('totalXp'),
+                value: '${visibleProgress.totalXp} ${text('xp')}',
                 icon: Icons.workspace_premium_outlined,
               ),
               _ResultCard(
-                title: 'Gold Awards',
-                value:
-                    '${visibleProgress.goldAwardCount(widget.totalQuestions)}',
+                title: text('goldAwards'),
+                value: '${visibleProgress.goldAwardCount(widget.totalQuestions)}',
                 icon: Icons.emoji_events_outlined,
               ),
 
-              const Spacer(),
+              const SizedBox(height: 24),
 
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: FilledButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => QuizScreen(
-                          level: widget.level,
-                          progress: visibleProgress,
-                          onProgressUpdated: widget.onProgressUpdated,
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('Try Again'),
+                  onPressed: retryQuiz,
+                  child: Text(text('tryAgain')),
                 ),
               ),
 
@@ -230,8 +272,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Back to Campaign'),
+                  onPressed: backToCampaign,
+                  child: Text(text('backToCampaign')),
                 ),
               ),
 

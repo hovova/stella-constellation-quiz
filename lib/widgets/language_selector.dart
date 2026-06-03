@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../data/app_text.dart';
 import '../data/languages.dart';
 import '../models/player_progress.dart';
+import '../services/audio_service.dart';
 
 class LanguageSelector extends StatelessWidget {
   final PlayerProgress progress;
@@ -14,6 +16,8 @@ class LanguageSelector extends StatelessWidget {
   });
 
   void openLanguageMenu(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF071426),
@@ -29,15 +33,20 @@ class LanguageSelector extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Choose Language',
-                  style: TextStyle(
+                Text(
+                  AppText.get(
+                    progress.selectedLanguageCode,
+                    'chooseLanguage',
+                  ),
+                  style: const TextStyle(
                     color: Color(0xFFFFD98A),
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(height: 18),
+
                 ...appLanguages.map((language) {
                   final selected =
                       language.code == progress.selectedLanguageCode;
@@ -56,11 +65,14 @@ class LanguageSelector extends StatelessWidget {
                     ),
                     child: ListTile(
                       onTap: () {
+                        StellaAudioService.playButtonTap();
+
                         final updatedProgress = progress.copyWith(
                           selectedLanguageCode: language.code,
                         );
 
                         onProgressUpdated(updatedProgress);
+
                         Navigator.pop(context);
                       },
                       leading: Text(

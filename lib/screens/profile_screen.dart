@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../data/achievements.dart';
+import '../data/app_text.dart';
 import '../data/avatars.dart';
+import '../data/campaign_levels.dart';
 import '../models/player_progress.dart';
+import '../services/audio_service.dart';
 import 'achievements_screen.dart';
 import 'avatar_selection_screen.dart';
+import 'credits_screen.dart';
 import 'home_screen.dart';
 import 'leaderboard_screen.dart';
 
@@ -18,13 +22,61 @@ class ProfileScreen extends StatelessWidget {
     required this.onProgressUpdated,
   });
 
+  String text(String key) {
+    return AppText.get(progress.selectedLanguageCode, key);
+  }
+
+  String avatarName(String avatarId) {
+    final languageCode = progress.selectedLanguageCode;
+
+    final names = {
+      'en': {
+        'star': 'Star',
+        'moon': 'Moon',
+        'rocket': 'Rocket',
+        'planet': 'Planet',
+        'trophy': 'Trophy',
+        'premium': 'Premium',
+      },
+      'uk': {
+        'star': 'Зоря',
+        'moon': 'Місяць',
+        'rocket': 'Ракета',
+        'planet': 'Планета',
+        'trophy': 'Кубок',
+        'premium': 'Преміум',
+      },
+      'ru': {
+        'star': 'Звезда',
+        'moon': 'Луна',
+        'rocket': 'Ракета',
+        'planet': 'Планета',
+        'trophy': 'Кубок',
+        'premium': 'Премиум',
+      },
+    };
+
+    return names[languageCode]?[avatarId] ??
+        names['en']?[avatarId] ??
+        findAvatarById(avatarId).name;
+  }
+
   int get playerLevel {
     return (progress.totalXp ~/ 1000) + 1;
   }
 
+  int get campaignGoldAwardCount {
+    return campaignLevels.where((level) {
+      final totalQuestions =
+          level.constellations.length < 5 ? level.constellations.length : 5;
+
+      return progress.hasGoldAward(level.id, totalQuestions);
+    }).length;
+  }
+
   int get leaderboardScore {
     return playerLevel * 1000 +
-        progress.goldAwardCount(5) * 250 +
+        campaignGoldAwardCount * 250 +
         progress.unlockedAchievements.length * 100;
   }
 
@@ -57,6 +109,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void openEditNameDialog(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     final controller = TextEditingController(text: progress.playerName);
 
     showDialog(
@@ -68,32 +122,37 @@ class ProfileScreen extends StatelessWidget {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF10243B),
-              title: const Text(
-                'Edit Name',
-                style: TextStyle(color: Colors.white),
+              title: Text(
+                text('editName'),
+                style: const TextStyle(color: Colors.white),
               ),
               content: TextField(
                 controller: controller,
                 maxLength: 16,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Enter player name',
+                  hintText: text('enterPlayerName'),
                   hintStyle: const TextStyle(color: Colors.white38),
                   errorText: errorText,
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  onPressed: () {
+                    StellaAudioService.playButtonTap();
+                    Navigator.pop(context);
+                  },
+                  child: Text(text('cancel')),
                 ),
                 FilledButton(
                   onPressed: () {
+                    StellaAudioService.playButtonTap();
+
                     final newName = controller.text.trim();
 
                     if (!isValidName(newName)) {
                       setDialogState(() {
-                        errorText = 'Use 3–16 clean letters/numbers only.';
+                        errorText = text('invalidName');
                       });
                       return;
                     }
@@ -105,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                     onProgressUpdated(updatedProgress);
                     Navigator.pop(context);
                   },
-                  child: const Text('Save'),
+                  child: Text(text('save')),
                 ),
               ],
             );
@@ -116,6 +175,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void openLeaderboard(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -125,6 +186,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void openAchievements(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -134,12 +197,27 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void openAvatarSelection(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => AvatarSelectionScreen(
           progress: progress,
           onProgressUpdated: onProgressUpdated,
+        ),
+      ),
+    );
+  }
+
+  void openCredits(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreditsScreen(
+          languageCode: progress.selectedLanguageCode,
         ),
       ),
     );
@@ -154,9 +232,9 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: ListView(
           children: [
-            const Text(
-              'Profile',
-              style: TextStyle(
+            Text(
+              text('profile'),
+              style: const TextStyle(
                 fontSize: 34,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFFD98A),
@@ -165,9 +243,9 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            const Text(
-              'Track your progress, achievements and premium status.',
-              style: TextStyle(
+            Text(
+              text('profileDescription'),
+              style: const TextStyle(
                 color: Colors.white60,
                 height: 1.5,
               ),
@@ -185,13 +263,40 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: const Color(0xFF071426),
-                      child: Icon(
-                        avatar.fallbackIcon,
-                        color: const Color(0xFFFFD98A),
-                        size: 38,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: progress.selectedAvatarFrameId == 'seven_day'
+                              ? const Color(0xFFFFD98A)
+                              : progress.selectedAvatarFrameId == 'premium_gold'
+                                  ? const Color(0xFFB78CFF)
+                                  : Colors.transparent,
+                          width:
+                              progress.selectedAvatarFrameId == 'none' ? 0 : 3,
+                        ),
+                        boxShadow: progress.selectedAvatarFrameId == 'none'
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: progress.selectedAvatarFrameId ==
+                                          'premium_gold'
+                                      ? const Color(0x55B78CFF)
+                                      : const Color(0x55FFD98A),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 36,
+                        backgroundColor: const Color(0xFF071426),
+                        child: Icon(
+                          avatar.fallbackIcon,
+                          color: const Color(0xFFFFD98A),
+                          size: 38,
+                        ),
                       ),
                     ),
 
@@ -213,7 +318,7 @@ class ProfileScreen extends StatelessWidget {
                           const SizedBox(height: 4),
 
                           Text(
-                            '${avatar.name} • Level $playerLevel',
+                            '${avatarName(avatar.id)} • ${text('level')} $playerLevel',
                             style: const TextStyle(
                               color: Colors.white54,
                             ),
@@ -237,8 +342,8 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _ProfileMainButton(
-                    title: 'Avatar',
-                    subtitle: 'Choose look',
+                    title: text('avatar'),
+                    subtitle: text('chooseLook'),
                     icon: Icons.face,
                     filled: false,
                     onTap: () => openAvatarSelection(context),
@@ -249,8 +354,8 @@ class ProfileScreen extends StatelessWidget {
 
                 Expanded(
                   child: _ProfileMainButton(
-                    title: 'Achievements',
-                    subtitle: 'View badges',
+                    title: text('achievements'),
+                    subtitle: text('viewBadges'),
                     icon: Icons.emoji_events,
                     filled: true,
                     onTap: () => openAchievements(context),
@@ -262,8 +367,8 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             _ProfileMainButton(
-              title: 'Leaderboard',
-              subtitle: 'Compare your level and score',
+              title: text('leaderboard'),
+              subtitle: text('leaderboardSubtitle'),
               icon: Icons.leaderboard,
               filled: false,
               wide: true,
@@ -273,53 +378,88 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             _ProfileStatCard(
-              title: 'Level',
+              title: text('level'),
               value: '$playerLevel',
               icon: Icons.trending_up,
             ),
             _ProfileStatCard(
-              title: 'Leaderboard Score',
+              title: text('leaderboardScore'),
               value: '$leaderboardScore',
               icon: Icons.leaderboard,
             ),
             _ProfileStatCard(
-              title: 'Total XP',
+              title: text('totalXp'),
               value: '${progress.totalXp}',
               icon: Icons.bolt,
             ),
             _ProfileStatCard(
-              title: 'Gold Awards',
-              value: '${progress.goldAwardCount(5)}',
+              title: text('dailyLoginStreak'),
+              value: '${progress.dailyLoginStreak}',
+              icon: Icons.calendar_month,
+            ),
+            _ProfileStatCard(
+              title: text('goldAwards'),
+              value: '$campaignGoldAwardCount',
               icon: Icons.workspace_premium,
             ),
             _ProfileStatCard(
-              title: 'Achievements',
+              title: text('achievements'),
               value:
                   '${progress.unlockedAchievements.length} / ${allAchievements.length}',
               icon: Icons.emoji_events,
             ),
             _ProfileStatCard(
-              title: 'Language',
+              title: text('language'),
               value: progress.selectedLanguageCode.toUpperCase(),
               icon: Icons.language,
             ),
             _ProfileStatCard(
-              title: 'Sound',
-              value: progress.soundEnabled ? 'On' : 'Off',
+              title: text('sound'),
+              value: progress.soundEnabled ? text('on') : text('off'),
               icon: progress.soundEnabled ? Icons.volume_up : Icons.volume_off,
             ),
             _ProfileStatCard(
-              title: 'No Ads',
+              title: text('noAdsStatus'),
               value: progress.hasNoAds || progress.hasPremium
-                  ? 'Active'
-                  : 'Inactive',
+                  ? text('active')
+                  : text('inactive'),
               icon: Icons.block,
             ),
             _ProfileStatCard(
-              title: 'Premium',
-              value: progress.hasPremium ? 'Active' : 'Inactive',
+              title: text('premiumStatus'),
+              value: progress.hasPremium ? text('active') : text('inactive'),
               icon: Icons.workspace_premium,
             ),
+
+            const SizedBox(height: 8),
+
+            Center(
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white38,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(
+                  Icons.image_outlined,
+                  size: 15,
+                ),
+                label: Text(
+                  text('imageCredits'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onPressed: () => openCredits(context),
+              ),
+            ),
+
+            const SizedBox(height: 18),
           ],
         ),
       ),
@@ -372,9 +512,8 @@ class _ProfileMainButton extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisAlignment: wide
-              ? MainAxisAlignment.start
-              : MainAxisAlignment.center,
+          mainAxisAlignment:
+              wide ? MainAxisAlignment.start : MainAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -408,9 +547,8 @@ class _ProfileMainButton extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: filled
-                          ? const Color(0xCC071426)
-                          : Colors.white54,
+                      color:
+                          filled ? const Color(0xCC071426) : Colors.white54,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),

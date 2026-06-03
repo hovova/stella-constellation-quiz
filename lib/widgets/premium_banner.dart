@@ -1,21 +1,35 @@
 import 'package:flutter/material.dart';
 
+import '../data/app_text.dart';
 import '../screens/premium_screen.dart';
+import '../services/audio_service.dart';
 
 class PremiumBanner extends StatelessWidget {
-  const PremiumBanner({super.key});
+  final String languageCode;
+
+  const PremiumBanner({
+    super.key,
+    this.languageCode = 'en',
+  });
 
   void openPremiumMenu(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const PremiumScreen(),
+      builder: (_) => PremiumScreen(
+        languageCode: languageCode,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final noAdsText = AppText.get(languageCode, 'noAds');
+    final premiumText = AppText.get(languageCode, 'premium');
+
     return InkWell(
       onTap: () => openPremiumMenu(context),
       borderRadius: BorderRadius.circular(18),
@@ -38,41 +52,41 @@ class PremiumBanner extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.block,
               color: Color(0xFFFFD98A),
               size: 16,
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(
-              'No Ads',
-              style: TextStyle(
+              noAdsText,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(width: 8),
-            Text(
+            const SizedBox(width: 8),
+            const Text(
               '/',
               style: TextStyle(
                 color: Colors.white38,
                 fontSize: 12,
               ),
             ),
-            SizedBox(width: 8),
-            Icon(
+            const SizedBox(width: 8),
+            const Icon(
               Icons.workspace_premium,
               color: Color(0xFFFFD98A),
               size: 16,
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(
-              'Premium',
-              style: TextStyle(
+              premiumText,
+              style: const TextStyle(
                 color: Color(0xFFFFD98A),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,

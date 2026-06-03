@@ -1,64 +1,85 @@
 import 'package:flutter/material.dart';
+
+import '../data/app_text.dart';
+import '../models/player_progress.dart';
 import 'home_screen.dart';
 
 class DuelScreen extends StatelessWidget {
-  const DuelScreen({super.key});
+  final PlayerProgress progress;
+
+  const DuelScreen({
+    super.key,
+    required this.progress,
+  });
+
+  String text(String key) {
+    return AppText.get(progress.selectedLanguageCode, key);
+  }
 
   @override
   Widget build(BuildContext context) {
     return StellaGradientScaffold(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(26),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Duel',
-              style: TextStyle(
+            Text(
+              text('duelTitle'),
+              style: const TextStyle(
+                color: Color(0xFFFFD98A),
                 fontSize: 34,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFD98A),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Challenge friends in quick constellation quizzes.',
-              style: TextStyle(
+
+            const SizedBox(height: 12),
+
+            Text(
+              text('duelDescription'),
+              style: const TextStyle(
                 color: Colors.white60,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 40),
+
+            const SizedBox(height: 46),
 
             Card(
               color: const Color(0xFF10243B),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: Color(0x223A5B80)),
+                borderRadius: BorderRadius.circular(22),
+                side: const BorderSide(
+                  color: Color(0x223A5B80),
+                ),
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(22),
+              child: Padding(
+                padding: const EdgeInsets.all(22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.sports_esports,
                       color: Color(0xFFFFD98A),
-                      size: 38,
+                      size: 34,
                     ),
-                    SizedBox(height: 18),
+
+                    const SizedBox(height: 26),
+
                     Text(
-                      'Friend Duels Coming Soon',
-                      style: TextStyle(
+                      text('friendDuelsComingSoon'),
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 23,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 10),
+
+                    const SizedBox(height: 12),
+
                     Text(
-                      'Create a room code, invite a friend, answer the same questions, and compete for the highest score.',
-                      style: TextStyle(
+                      text('duelCardDescription'),
+                      style: const TextStyle(
                         color: Colors.white60,
                         height: 1.5,
                       ),
@@ -75,7 +96,7 @@ class DuelScreen extends StatelessWidget {
               height: 52,
               child: FilledButton(
                 onPressed: null,
-                child: Text('Create Duel Room'),
+                child: Text(text('createDuelRoom')),
               ),
             ),
 
@@ -86,7 +107,7 @@ class DuelScreen extends StatelessWidget {
               height: 52,
               child: OutlinedButton(
                 onPressed: null,
-                child: Text('Join with Code'),
+                child: Text(text('joinWithCode')),
               ),
             ),
           ],

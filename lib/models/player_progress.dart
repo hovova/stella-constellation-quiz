@@ -10,6 +10,17 @@ class PlayerProgress {
   final bool soundEnabled;
   final bool musicEnabled;
 
+  // Daily login / streak tracking
+  final String? lastLoginDate;
+  final int dailyLoginStreak;
+
+  // Daily challenge tracking
+  final String? lastDailyChallengeDate;
+
+  // Avatar frames
+  final Set<String> unlockedAvatarFrameIds;
+  final String selectedAvatarFrameId;
+
   const PlayerProgress({
     required this.totalXp,
     required this.bestScoresByLevel,
@@ -21,6 +32,11 @@ class PlayerProgress {
     required this.selectedLanguageCode,
     required this.soundEnabled,
     required this.musicEnabled,
+    required this.lastLoginDate,
+    required this.dailyLoginStreak,
+    required this.lastDailyChallengeDate,
+    required this.unlockedAvatarFrameIds,
+    required this.selectedAvatarFrameId,
   });
 
   factory PlayerProgress.initial() {
@@ -35,7 +51,36 @@ class PlayerProgress {
       selectedLanguageCode: 'en',
       soundEnabled: true,
       musicEnabled: true,
+      lastLoginDate: null,
+      dailyLoginStreak: 0,
+      lastDailyChallengeDate: null,
+      unlockedAvatarFrameIds: {'none'},
+      selectedAvatarFrameId: 'none',
     );
+  }
+
+  static String todayKey() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+
+    return '${now.year}-$month-$day';
+  }
+
+  static String yesterdayKey() {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final month = yesterday.month.toString().padLeft(2, '0');
+    final day = yesterday.day.toString().padLeft(2, '0');
+
+    return '${yesterday.year}-$month-$day';
+  }
+
+  bool get hasCompletedDailyChallengeToday {
+    return lastDailyChallengeDate == todayKey();
+  }
+
+  bool get adsRemoved {
+    return hasNoAds || hasPremium;
   }
 
   PlayerProgress copyWith({
@@ -49,6 +94,11 @@ class PlayerProgress {
     String? selectedLanguageCode,
     bool? soundEnabled,
     bool? musicEnabled,
+    String? lastLoginDate,
+    int? dailyLoginStreak,
+    String? lastDailyChallengeDate,
+    Set<String>? unlockedAvatarFrameIds,
+    String? selectedAvatarFrameId,
   }) {
     return PlayerProgress(
       totalXp: totalXp ?? this.totalXp,
@@ -63,6 +113,14 @@ class PlayerProgress {
           selectedLanguageCode ?? this.selectedLanguageCode,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       musicEnabled: musicEnabled ?? this.musicEnabled,
+      lastLoginDate: lastLoginDate ?? this.lastLoginDate,
+      dailyLoginStreak: dailyLoginStreak ?? this.dailyLoginStreak,
+      lastDailyChallengeDate:
+          lastDailyChallengeDate ?? this.lastDailyChallengeDate,
+      unlockedAvatarFrameIds:
+          unlockedAvatarFrameIds ?? this.unlockedAvatarFrameIds,
+      selectedAvatarFrameId:
+          selectedAvatarFrameId ?? this.selectedAvatarFrameId,
     );
   }
 
@@ -81,6 +139,59 @@ class PlayerProgress {
         ...bestScoresByLevel,
         levelId: newBestScore,
       },
+    );
+  }
+
+  PlayerProgress addXp(int xp) {
+    return copyWith(
+      totalXp: totalXp + xp,
+    );
+  }
+
+  PlayerProgress markDailyChallengeCompleted() {
+    return copyWith(
+      lastDailyChallengeDate: todayKey(),
+    );
+  }
+
+  PlayerProgress recordDailyLogin() {
+    final today = todayKey();
+
+    if (lastLoginDate == today) {
+      return this;
+    }
+
+    final newStreak = lastLoginDate == yesterdayKey()
+        ? dailyLoginStreak + 1
+        : 1;
+
+    return copyWith(
+      lastLoginDate: today,
+      dailyLoginStreak: newStreak,
+    );
+  }
+
+  PlayerProgress unlockAvatarFrame(String frameId) {
+    return copyWith(
+      unlockedAvatarFrameIds: {
+        ...unlockedAvatarFrameIds,
+        frameId,
+      },
+      selectedAvatarFrameId: frameId,
+    );
+  }
+
+  PlayerProgress selectAvatarFrame(String frameId) {
+    final isAlwaysAvailable = frameId == 'none';
+    final isUnlockedRewardFrame = unlockedAvatarFrameIds.contains(frameId);
+    final isPremiumFrame = frameId == 'premium_gold' && hasPremium;
+
+    if (!isAlwaysAvailable && !isUnlockedRewardFrame && !isPremiumFrame) {
+      return this;
+    }
+
+    return copyWith(
+      selectedAvatarFrameId: frameId,
     );
   }
 
@@ -129,6 +240,11 @@ class PlayerProgress {
       'selectedLanguageCode': selectedLanguageCode,
       'soundEnabled': soundEnabled,
       'musicEnabled': musicEnabled,
+      'lastLoginDate': lastLoginDate,
+      'dailyLoginStreak': dailyLoginStreak,
+      'lastDailyChallengeDate': lastDailyChallengeDate,
+      'unlockedAvatarFrameIds': unlockedAvatarFrameIds.toList(),
+      'selectedAvatarFrameId': selectedAvatarFrameId,
     };
   }
 
@@ -149,6 +265,15 @@ class PlayerProgress {
           json['selectedLanguageCode'] as String? ?? 'en',
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       musicEnabled: json['musicEnabled'] as bool? ?? true,
+      lastLoginDate: json['lastLoginDate'] as String?,
+      dailyLoginStreak: json['dailyLoginStreak'] as int? ?? 0,
+      lastDailyChallengeDate:
+          json['lastDailyChallengeDate'] as String?,
+      unlockedAvatarFrameIds: Set<String>.from(
+        json['unlockedAvatarFrameIds'] as List? ?? ['none'],
+      ),
+      selectedAvatarFrameId:
+          json['selectedAvatarFrameId'] as String? ?? 'none',
     );
   }
 }

@@ -1,4 +1,4 @@
-package package com.mriyainteractive.stella
+﻿package com.mriyainteractive.stella
 
 import io.flutter.embedding.android.FlutterActivity
 

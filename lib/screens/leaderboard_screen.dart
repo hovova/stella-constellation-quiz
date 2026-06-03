@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/app_text.dart';
 import '../models/player_progress.dart';
 import 'home_screen.dart';
 
@@ -11,6 +12,10 @@ class LeaderboardScreen extends StatelessWidget {
     required this.progress,
   });
 
+  String text(String key) {
+    return AppText.get(progress.selectedLanguageCode, key);
+  }
+
   int get playerLevel {
     return (progress.totalXp ~/ 1000) + 1;
   }
@@ -21,36 +26,84 @@ class LeaderboardScreen extends StatelessWidget {
         progress.unlockedAchievements.length * 100;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final samplePlayers = [
+  List<_LeaderboardPlayer> buildLeaderboard() {
+    final names = [
+      'AstraNova',
+      'OrionHunter',
+      'LyraQueen',
+      'CosmicMriya',
+      'NovaKnight',
+      'AndromedaAce',
+      'StarVoyager',
+      'PolarisPrime',
+      'CelestialFox',
+      'NebulaWolf',
+      'VegaVision',
+      'LunarFalcon',
+      'SkyAtlas',
+      'MeteorMind',
+      'AuroraPilot',
+      'GalaxySage',
+      'SolarEcho',
+      'CometSeeker',
+      'StarlitOwl',
+      'ZenithTiger',
+      'NightCompass',
+      'AstroDragon',
+      'MoonlitBear',
+      'CygnusWing',
+      'PegasusPath',
+      'CassiopeiaX',
+      'ScorpiusFire',
+      'TaurusTrail',
+      'GeminiPulse',
+      'LeoSpark',
+      'VirgoNova',
+      'HydraStorm',
+      'DracoShift',
+      'PhoenixRay',
+      'AquilaArrow',
+      'PerseusPeak',
+      'CruxMaster',
+      'UrsaLegend',
+      'SiriusMode',
+      'AltairQuest',
+    ];
+
+    final rivals = List.generate(200, (index) {
+      final rankSeed = 200 - index;
+      final baseName = names[index % names.length];
+      final suffix = (index ~/ names.length) + 1;
+
+      final level = 4 + (rankSeed ~/ 8);
+      final score = 3200 + rankSeed * 185 + (index % 7) * 45;
+
+      return _LeaderboardPlayer(
+        name: '$baseName$suffix',
+        level: level,
+        score: score,
+        isYou: false,
+      );
+    });
+
+    rivals.add(
       _LeaderboardPlayer(
         name: progress.playerName,
         level: playerLevel,
         score: leaderboardScore,
         isYou: true,
       ),
-      const _LeaderboardPlayer(
-        name: 'Andromeda',
-        level: 8,
-        score: 8700,
-      ),
-      const _LeaderboardPlayer(
-        name: 'Orion',
-        level: 6,
-        score: 6400,
-      ),
-      const _LeaderboardPlayer(
-        name: 'Lyra',
-        level: 4,
-        score: 4300,
-      ),
-      const _LeaderboardPlayer(
-        name: 'Nova',
-        level: 3,
-        score: 3100,
-      ),
-    ]..sort((a, b) => b.score.compareTo(a.score));
+    );
+
+    rivals.sort((a, b) => b.score.compareTo(a.score));
+
+    return rivals;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final players = buildLeaderboard();
+    final yourRank = players.indexWhere((player) => player.isYou) + 1;
 
     return Scaffold(
       body: StellaGradientScaffold(
@@ -64,24 +117,32 @@ class LeaderboardScreen extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Leaderboard',
-                style: TextStyle(
+              Text(
+                text('stellaLeague'),
+                style: const TextStyle(
                   color: Color(0xFFFFD98A),
                   fontSize: 34,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Rankings are currently local preview data. Online leaderboard will come later.',
-                style: TextStyle(
+              Text(
+                '${text('yourRank')}: #$yourRank / ${players.length}',
+                style: const TextStyle(
+                  color: Color(0xFFFFD98A),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                text('leaguePreview'),
+                style: const TextStyle(
                   color: Colors.white60,
                   height: 1.5,
                 ),
               ),
               const SizedBox(height: 24),
-              ...samplePlayers.asMap().entries.map((entry) {
+              ...players.asMap().entries.map((entry) {
                 final index = entry.key;
                 final player = entry.value;
 
@@ -89,7 +150,7 @@ class LeaderboardScreen extends StatelessWidget {
                   color: player.isYou
                       ? const Color(0xFF132B46)
                       : const Color(0xFF10243B),
-                  margin: const EdgeInsets.only(bottom: 14),
+                  margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                     side: BorderSide(
@@ -100,24 +161,31 @@ class LeaderboardScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF071426),
+                      backgroundColor: index < 3
+                          ? const Color(0xFFFFD98A)
+                          : const Color(0xFF071426),
                       child: Text(
                         '#${index + 1}',
-                        style: const TextStyle(
-                          color: Color(0xFFFFD98A),
+                        style: TextStyle(
+                          color: index < 3
+                              ? const Color(0xFF071426)
+                              : const Color(0xFFFFD98A),
                           fontWeight: FontWeight.bold,
+                          fontSize: index < 99 ? 13 : 11,
                         ),
                       ),
                     ),
                     title: Text(
-                      player.isYou ? '${player.name}  You' : player.name,
+                      player.isYou
+                          ? '${player.name}  ${text('you')}'
+                          : player.name,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
-                      'Level ${player.level}',
+                      '${text('level')} ${player.level}',
                       style: const TextStyle(
                         color: Colors.white54,
                       ),
