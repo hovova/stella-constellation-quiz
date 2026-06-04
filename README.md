@@ -1,17 +1,43 @@
-# stella_constellation_quiz
+# Stella - Constellation Quiz
 
-A new Flutter project.
+Stella is a mobile constellation quiz game built with Flutter. It helps users learn the night sky through visual quizzes, campaign progression, daily challenges, achievements, avatars, and multilingual support.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Constellation quiz gameplay
+- Campaign-style level progression
+- Daily challenge mode
+- Match-style quiz modes
+- Constellation encyclopedia
+- Mythology and facts screens
+- Achievements and gold awards
+- Avatar and avatar frame selection
+- English, Ukrainian, and Russian language support
+- Music and sound effects
+- Ad support
+- Google Play Billing support for No Ads and Premium
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter
+- Dart
+- Shared Preferences
+- Google Mobile Ads
+- Google Play Billing / In-App Purchases
+- Audioplayers
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Project Structure
+
+```text
+lib/
+  data/
+  models/
+  screens/
+  services/
+  widgets/
+assets/
+  audio/
+  avatars/
+  constellations/
+  constellation_icons/
+  app_icon/
