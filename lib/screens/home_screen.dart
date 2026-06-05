@@ -95,6 +95,8 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 PremiumBanner(
                   languageCode: progress.selectedLanguageCode,
+                  progress: progress,
+                  onProgressUpdated: onProgressUpdated,
                 ),
               ],
             ),

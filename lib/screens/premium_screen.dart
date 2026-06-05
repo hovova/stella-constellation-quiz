@@ -488,7 +488,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 ),
               ],
 
-              if (canUseDevButtons) ...[
+              if (kDebugMode && canUseDevButtons) ...[
                 const SizedBox(height: 22),
 
                 Card(

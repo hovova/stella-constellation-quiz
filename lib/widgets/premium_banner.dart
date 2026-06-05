@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../data/app_text.dart';
+import '../models/player_progress.dart';
 import '../screens/premium_screen.dart';
 import '../services/audio_service.dart';
 
 class PremiumBanner extends StatelessWidget {
   final String languageCode;
+  final PlayerProgress progress;
+  final void Function(PlayerProgress updatedProgress) onProgressUpdated;
 
   const PremiumBanner({
     super.key,
-    this.languageCode = 'en',
+    required this.languageCode,
+    required this.progress,
+    required this.onProgressUpdated,
   });
 
   void openPremiumMenu(BuildContext context) {
@@ -21,6 +26,8 @@ class PremiumBanner extends StatelessWidget {
       isScrollControlled: true,
       builder: (_) => PremiumScreen(
         languageCode: languageCode,
+        progress: progress,
+        onProgressUpdated: onProgressUpdated,
       ),
     );
   }
