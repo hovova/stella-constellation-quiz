@@ -13,20 +13,20 @@ Source/credit notes:
 
 ## Audio
 
-Stella uses short sound effects and background music for menu/game feedback.
-
-Before public release, each audio file in `assets/audio/` should be checked for:
-- commercial use permission
-- attribution requirements
-- redistribution permission
-- modification permission
+Stella uses royalty-free sound effects and background music for menu, quiz, achievement, and feedback interactions.
 
 Audio files currently used:
-- `background_music.mp3`
-- `button_tap.mp3`
-- `correct.mp3`
-- `wrong.mp3`
-- `achievement.mp3`
+
+```text
+assets/audio/background_music.mp3
+assets/audio/button_tap.mp3
+assets/audio/correct.mp3
+assets/audio/wrong.mp3
+assets/audio/achievement.mp3
+```
+
+These audio assets are used for Stella gameplay and app feedback. Any attribution requirements should be added here before public release.
+
 
 ## App Ownership
 
