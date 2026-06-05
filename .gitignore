@@ -5,21 +5,40 @@
 .pub/
 build/
 flutter_*.png
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Unused Flutter platforms for Android-only Stella
+ios/
+linux/
+macos/
+web/
+windows/
+test/
 
 # Android / Gradle
 android/.gradle/
+android/build/
 android/app/build/
 android/local.properties
+local.properties
+
+# Release signing keys - NEVER commit
 android/key.properties
+key.properties
 *.jks
 *.keystore
+android/app/*.jks
+android/app/*.keystore
 
-# iOS / macOS
-ios/Pods/
-ios/.symlinks/
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-macos/Flutter/ephemeral/
+# Secrets / environment
+.env
+.env.*
+secrets.json
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
 
 # IDE
 .vscode/
@@ -30,18 +49,9 @@ macos/Flutter/ephemeral/
 .DS_Store
 Thumbs.db
 
-# Secrets / environment
-.env
-.env.*
-google-services.json
-
 # Logs
 *.log
 
 # Temporary
 tmp/
 temp/
-
-android/key.properties
-*.jks
-*.keystore
