@@ -9,7 +9,6 @@ Constellation imagery and icon-style adaptations are used for educational, quiz,
 Source/credit notes:
 - NOIRLab / public astronomy imagery where applicable.
 - Adapted and simplified constellation visuals created for Stella gameplay and mobile readability.
-- Any third-party/public-domain/source assets should be credited here before release.
 
 ## Audio
 
@@ -24,8 +23,6 @@ assets/audio/correct.mp3
 assets/audio/wrong.mp3
 assets/audio/achievement.mp3
 ```
-
-These audio assets are used for Stella gameplay and app feedback. Any attribution requirements should be added here before public release.
 
 
 ## App Ownership
