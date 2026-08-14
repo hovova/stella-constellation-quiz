@@ -32,6 +32,12 @@ class AchievementsScreen extends StatelessWidget {
         return text('diamondSkyMasterTitle');
       case AchievementIds.sevenDayLogin:
         return text('sevenDayLoginTitle');
+      case AchievementIds.win10Duels:
+        return text('win10DuelsTitle');
+      case AchievementIds.win100Duels:
+        return text('win100DuelsTitle');
+      case AchievementIds.win1000Duels:
+        return text('win1000DuelsTitle');
       default:
         return achievement.title;
     }
@@ -49,6 +55,12 @@ class AchievementsScreen extends StatelessWidget {
         return text('diamondSkyMasterDescription');
       case AchievementIds.sevenDayLogin:
         return text('sevenDayLoginDescription');
+      case AchievementIds.win10Duels:
+        return text('win10DuelsDescription');
+      case AchievementIds.win100Duels:
+        return text('win100DuelsDescription');
+      case AchievementIds.win1000Duels:
+        return text('win1000DuelsDescription');
       default:
         return achievement.description;
     }
@@ -56,7 +68,10 @@ class AchievementsScreen extends StatelessWidget {
 
   bool shouldShowProgressBar(Achievement achievement) {
     return achievement.id == AchievementIds.sevenDayLogin ||
-        achievement.id == AchievementIds.diamondSkyMaster;
+        achievement.id == AchievementIds.diamondSkyMaster ||
+        achievement.id == AchievementIds.win10Duels ||
+        achievement.id == AchievementIds.win100Duels ||
+        achievement.id == AchievementIds.win1000Duels;
   }
 
   double achievementProgressValue(Achievement achievement) {
@@ -66,20 +81,27 @@ class AchievementsScreen extends StatelessWidget {
 
     if (achievement.id == AchievementIds.diamondSkyMaster) {
       final totalLevels = campaignLevels.length;
-
-      if (totalLevels == 0) {
-        return 0;
-      }
+      if (totalLevels == 0) return 0;
 
       final goldAwards = campaignLevels.where((level) {
         final totalQuestions = level.constellations.length < 5
             ? level.constellations.length
             : 5;
-
         return progress.hasGoldAward(level.id, totalQuestions);
       }).length;
 
       return goldAwards / totalLevels;
+    }
+
+    // Duel progress bars
+    if (achievement.id == AchievementIds.win10Duels) {
+      return progress.duelsWon.clamp(0, 10) / 10;
+    }
+    if (achievement.id == AchievementIds.win100Duels) {
+      return progress.duelsWon.clamp(0, 100) / 100;
+    }
+    if (achievement.id == AchievementIds.win1000Duels) {
+      return progress.duelsWon.clamp(0, 1000) / 1000;
     }
 
     return progress.hasAchievement(achievement.id) ? 1 : 0;
@@ -93,16 +115,28 @@ class AchievementsScreen extends StatelessWidget {
 
     if (achievement.id == AchievementIds.diamondSkyMaster) {
       final totalLevels = campaignLevels.length;
-
       final goldAwards = campaignLevels.where((level) {
         final totalQuestions = level.constellations.length < 5
             ? level.constellations.length
             : 5;
-
         return progress.hasGoldAward(level.id, totalQuestions);
       }).length;
 
       return '$goldAwards / $totalLevels';
+    }
+
+    // Duel progress text
+    if (achievement.id == AchievementIds.win10Duels) {
+      final wins = progress.duelsWon.clamp(0, 10);
+      return '$wins / 10';
+    }
+    if (achievement.id == AchievementIds.win100Duels) {
+      final wins = progress.duelsWon.clamp(0, 100);
+      return '$wins / 100';
+    }
+    if (achievement.id == AchievementIds.win1000Duels) {
+      final wins = progress.duelsWon.clamp(0, 1000);
+      return '$wins / 1000';
     }
 
     return progress.hasAchievement(achievement.id) ? '1 / 1' : '0 / 1';
@@ -126,9 +160,7 @@ class AchievementsScreen extends StatelessWidget {
                 },
                 icon: const Icon(Icons.arrow_back),
               ),
-
               const SizedBox(height: 16),
-
               Text(
                 text('achievementsTitle'),
                 style: const TextStyle(
@@ -137,9 +169,7 @@ class AchievementsScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 12),
-
               Text(
                 '$unlockedCount / ${allAchievements.length} ${text('unlocked')}',
                 style: const TextStyle(
@@ -147,9 +177,7 @@ class AchievementsScreen extends StatelessWidget {
                   fontSize: 15,
                 ),
               ),
-
               const SizedBox(height: 28),
-
               ...allAchievements.map((achievement) {
                 final unlocked =
                     progress.unlockedAchievements.contains(achievement.id);
@@ -179,9 +207,7 @@ class AchievementsScreen extends StatelessWidget {
                             color: unlocked ? Colors.white : Colors.white24,
                           ),
                         ),
-
                         const SizedBox(width: 16),
-
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,9 +237,7 @@ class AchievementsScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-
                               const SizedBox(height: 6),
-
                               Text(
                                 achievementDescription(achievement),
                                 style: TextStyle(
@@ -224,10 +248,8 @@ class AchievementsScreen extends StatelessWidget {
                                   fontSize: 13,
                                 ),
                               ),
-
                               if (shouldShowProgressBar(achievement)) ...[
                                 const SizedBox(height: 12),
-
                                 Row(
                                   children: [
                                     Expanded(
@@ -236,8 +258,7 @@ class AchievementsScreen extends StatelessWidget {
                                             BorderRadius.circular(20),
                                         child: LinearProgressIndicator(
                                           value: achievementProgressValue(
-                                            achievement,
-                                          ),
+                                              achievement),
                                           minHeight: 8,
                                           backgroundColor:
                                               const Color(0xFF071426),
@@ -247,9 +268,7 @@ class AchievementsScreen extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-
                                     const SizedBox(width: 10),
-
                                     Text(
                                       achievementProgressText(achievement),
                                       style: TextStyle(

@@ -26,7 +26,7 @@ class LeaderboardScreen extends StatelessWidget {
         progress.unlockedAchievements.length * 100;
   }
 
-  List<_LeaderboardPlayer> buildLeaderboard() {
+  List<_LeaderboardPlayer> _buildLeaderboard() {
     final names = [
       'AstraNova',
       'OrionHunter',
@@ -102,7 +102,7 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final players = buildLeaderboard();
+    final players = _buildLeaderboard();
     final yourRank = players.indexWhere((player) => player.isYou) + 1;
 
     return Scaffold(

@@ -21,7 +21,7 @@ class AppText {
       'achievementProgress': 'Achievement Progress',
       'achievementProgressSubtitle':
           'Tap to view your achievements, rewards, and locked badges.',
-      'version': 'Version 0.1.0',
+      'version': 'Version 1.1.0',
 
       // Common
       'language': 'Language',
@@ -197,6 +197,36 @@ class AppText {
           'Create a room code, invite a friend, answer the same questions, and compete for the highest score.',
       'createDuelRoom': 'Create Duel Room',
       'joinWithCode': 'Join with Code',
+      'findingOpponent': 'Finding Opponent',
+      'searchingChallenger': 'Searching for a random challenger...',
+      'friendRoomCreated': 'Friend Room Created',
+      'shareRoomCode': 'Share this code with your friend:',
+      'defeatTitle': 'Defeat!',
+      'victoryTitle': 'Victory!',
+      'defeatDescription': 'Your opponent won the duel.',
+      'victoryDescription': 'You outlasted your opponent!',
+      'backToMenu': 'Back to Menu',
+      'arenaTitle': 'Live 10-Second Duels',
+      'arenaDescription': 'Lose a life on incorrect answers. 10 seconds per question. Last player standing wins!',
+      'findRandomOpponent': 'Find Random Opponent',
+      'createFriendRoom': 'Create Friend Room',
+      'enterRoomCode': 'Enter Room Code',
+      'roomNotFound': 'Room not found. Check code.',
+      'join': 'Join',
+      'playWithBot': 'Play with AI',
+      'opponentFound': 'OPPONENT FOUND!',
+      'startingIn': 'Starting in',
+      'waitingForOpponent': 'Waiting for opponent...',
+      'win10DuelsTitle': 'Duelist Novice',
+      'win10DuelsDescription': 'Win 10 live multiplayer duels.',
+      'win100DuelsTitle': 'Arena Veteran',
+      'win100DuelsDescription': 'Win 100 live multiplayer duels.',
+      'win1000DuelsTitle': 'Grand Champion',
+      'win1000DuelsDescription': 'Win 1000 live multiplayer duels.',
+      'crownFrame': 'Champion Crown',
+      'unlockedBy1000Wins': 'Unlocked by winning 1000 duels.',
+      'duelsWon': 'Duels Won',
+      
 
       // Quiz / Results
       'question': 'Question',
@@ -259,7 +289,7 @@ class AppText {
       'achievementProgress': 'Прогрес досягнень',
       'achievementProgressSubtitle':
           'Натисни, щоб переглянути досягнення, нагороди та заблоковані значки.',
-      'version': 'Версія 0.1.0',
+      'version': 'Версія 1.1.0',
 
       // Common
       'language': 'Мова',
@@ -415,7 +445,6 @@ class AppText {
       'premiumFeature5': 'Виклик усіх 88 сузір’їв',
       'premiumFeature6': 'Преміум-рамки для аватарів',
 
-
       // Stars / Encyclopedia
       'starsTitle': 'Сузір’я',
       'starsDescription':
@@ -429,12 +458,37 @@ class AppText {
 
       // Duel
       'duelTitle': 'Дуель',
-      'duelDescription': 'Змагайся з друзями у битвах сузір’їв. Скоро.',
+      'duelDescription': 'Змагайся з друзями у битвах сузір’їв.',
       'friendDuelsComingSoon': 'Дуелі з друзями скоро',
       'duelCardDescription':
           'Створи код кімнати, запроси друга, відповідайте на однакові питання та змагайтеся за найвищий рахунок.',
       'createDuelRoom': 'Створити дуель',
       'joinWithCode': 'Увійти за кодом',
+      'findingOpponent': 'Пошук супротивника',
+      'searchingChallenger': 'Шукаємо випадкового супротивника...',
+      'friendRoomCreated': 'Кімнату створено',
+      'shareRoomCode': 'Поділіться цим кодом з другом:',
+      'defeatTitle': 'Поразка!',
+      'victoryTitle': 'Перемога!',
+      'defeatDescription': 'Суперник переміг у дуелі.',
+      'victoryDescription': 'Ви пережили суперника!',
+      'backToMenu': 'Назад до меню',
+      'arenaTitle': 'Живі дуелі за 10 секунд',
+      'arenaDescription': 'Втрачай життя через неправильні відповіді. 10 секунд на питання. Перемагає останній!',
+      'findRandomOpponent': 'Знайти випадкового суперника',
+      'createFriendRoom': 'Створити кімнату для друга',
+      'enterRoomCode': 'Введіть код кімнати',
+      'roomNotFound': 'Кімнату не знайдено. Перевірте код.',
+      'join': 'Увійти',
+      'win10DuelsTitle': 'Новачок дуелей',
+      'win10DuelsDescription': 'Виграйте 10 живих багатокористувацьких дуелей.',
+      'win100DuelsTitle': 'Ветеран арени',
+      'win100DuelsDescription': 'Виграйте 100 живих багатокористувацьких дуелей.',
+      'win1000DuelsTitle': 'Великий чемпіон',
+      'win1000DuelsDescription': 'Виграйте 1000 живих багатокористувацьких дуелей.',
+      'crownFrame': 'Корона чемпіона',
+      'unlockedBy1000Wins': 'Розблоковано за 1000 перемог.',
+      'duelsWon': 'Виграно дуелей',
 
       // Quiz / Results
       'question': 'Питання',
@@ -456,7 +510,10 @@ class AppText {
       'matchedAllPairs': 'Усі пари поєднано.',
       'premiumModePractice': 'Преміум-тренування завершено.',
       'mythologyQuestion': 'Яке сузір’я описує ця історія?',
-
+      'playWithBot': 'Грати з ботом',
+      'opponentFound': 'СУПЕРНИКА ЗНАЙДЕНО!',
+      'startingIn': 'Початок через',
+      'waitingForOpponent': 'Очікування суперника...',
 
       // Credits
       'imageCredits': 'Авторство зображень',
@@ -498,7 +555,7 @@ class AppText {
       'achievementProgress': 'Прогресс достижений',
       'achievementProgressSubtitle':
           'Нажми, чтобы увидеть достижения, награды и закрытые значки.',
-      'version': 'Версия 0.1.0',
+      'version': 'Версия 1.1.0',
 
       // Common
       'language': 'Язык',
@@ -624,7 +681,6 @@ class AppText {
       'chooseFrame': 'Выберите рамку аватара.',
       'unlockedBySevenDayLogin': 'Открывается за серию входов 7 дней',
 
-
       // Daily Match
       'dailyMatchInstructions': 'Соедини каждую иконку созвездия с правильным названием.',
       'dailyMatchProgress': 'Пар собрано',
@@ -668,12 +724,41 @@ class AppText {
 
       // Duel
       'duelTitle': 'Дуэль',
-      'duelDescription': 'Соревнуйся с друзьями в битвах созвездий. Скоро.',
+      'duelDescription': 'Соревнуйся с друзьями в битвах созвездий.',
       'friendDuelsComingSoon': 'Дуэли с друзьями скоро',
       'duelCardDescription':
           'Создай код комнаты, пригласи друга, отвечайте на одинаковые вопросы и соревнуйтесь за лучший счёт.',
       'createDuelRoom': 'Создать дуэль',
       'joinWithCode': 'Войти по коду',
+      'findingOpponent': 'Поиск противника',
+      'searchingChallenger': 'Ищем случайного противника...',
+      'friendRoomCreated': 'Комната создана',
+      'shareRoomCode': 'Поделитесь этим кодом с другом:',
+      'defeatTitle': 'Поражение!',
+      'victoryTitle': 'Победа!',
+      'defeatDescription': 'Ваш соперник победил в дуэли.',
+      'victoryDescription': 'Вы переждали соперника!',
+      'backToMenu': 'Назад в меню',
+      'arenaTitle': 'Живые дуэли за 10 секунд',
+      'arenaDescription': 'Теряй жизнь за неверные ответы. 10 секунд на вопрос. Последний выживший побеждает!',
+      'findRandomOpponent': 'Найти случайного противника',
+      'createFriendRoom': 'Создать комнату для друга',
+      'enterRoomCode': 'Введите код комнаты',
+      'roomNotFound': 'Комната не найдена. Проверьте код.',
+      'join': 'Войти',
+      'playWithBot': 'Играть с ИИ',
+      'opponentFound': 'ПРОТИВНИК НАЙДЕН!',
+      'startingIn': 'Начало через',
+      'waitingForOpponent': 'Ожидание противника...',
+      'win10DuelsTitle': 'Новичок дуэлей',
+      'win10DuelsDescription': 'Выиграйте 10 живых многопользовательских дуэлей.',
+      'win100DuelsTitle': 'Ветеран арены',
+      'win100DuelsDescription': 'Выиграйте 100 живых многопользовательских дуэлей.',
+      'win1000DuelsTitle': 'Великий чемпион',
+      'win1000DuelsDescription': 'Выиграйте 1000 живых многопользовательских дуэлей.',
+      'crownFrame': 'Корона чемпиона',
+      'unlockedBy1000Wins': 'Разблокировано за 1000 побед.',
+      'duelsWon': 'Выиграно дуэлей',
 
       // Quiz / Results
       'question': 'Вопрос',

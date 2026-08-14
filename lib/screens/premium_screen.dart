@@ -279,6 +279,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
+  
+
   void givePremium(BuildContext context) {
     StellaAudioService.playButtonTap();
 
@@ -295,6 +297,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
       const SnackBar(
         behavior: SnackBarBehavior.floating,
         content: Text('DEV: Premium activated'),
+      ),
+    );
+  }
+
+  void add100Duels(BuildContext context) {
+    StellaAudioService.playButtonTap();
+
+    if (!canUseDevButtons) return;
+
+    var updated = widget.progress!;
+    for (int i = 0; i < 100; i++) {
+      updated = updated.recordDuelWin();
+    }
+
+    widget.onProgressUpdated!(updated);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(
+          'DEV: Added 100 wins. Total: ${updated.duelsWon}',
+        ),
       ),
     );
   }
@@ -411,6 +435,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
 
               const SizedBox(height: 24),
+
+            
+
 
               _UpgradeCard(
                 title: text('noAds'),
@@ -553,6 +580,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             onPressed: () => addOneLoginDay(context),
                             icon: const Icon(Icons.calendar_month),
                             label: const Text('DEV: Add 1 Login Day'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => add100Duels(context),
+                            icon: const Icon(Icons.sports_esports),
+                            label: const Text('DEV: Add 100 Wins'),
                           ),
                         ),
                       ],

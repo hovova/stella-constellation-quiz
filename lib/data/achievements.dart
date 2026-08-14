@@ -6,6 +6,10 @@ class AchievementIds {
   static const goldStargazer = 'gold_stargazer';
   static const diamondSkyMaster = 'diamond_sky_master';
   static const sevenDayLogin = 'seven_day_login';
+  // New Duel Achievements
+  static const win10Duels = 'win_10_duels';
+  static const win100Duels = 'win_100_duels';
+  static const win1000Duels = 'win_1000_duels';
 }
 
 const Achievement firstLoginAchievement = Achievement(
@@ -43,10 +47,35 @@ const Achievement sevenDayLoginAchievement = Achievement(
   emoji: '📅',
 );
 
+// New Duel Achievements
+const Achievement win10DuelsAchievement = Achievement(
+  id: AchievementIds.win10Duels,
+  title: 'Duelist Novice',
+  description: 'Win 10 live multiplayer duels.',
+  emoji: '⚔️',
+);
+
+const Achievement win100DuelsAchievement = Achievement(
+  id: AchievementIds.win100Duels,
+  title: 'Arena Veteran',
+  description: 'Win 100 live multiplayer duels.',
+  emoji: '🛡️',
+);
+
+const Achievement win1000DuelsAchievement = Achievement(
+  id: AchievementIds.win1000Duels,
+  title: 'Grand Champion',
+  description: 'Win 1000 live multiplayer duels.',
+  emoji: '👑',
+);
+
 const List<Achievement> allAchievements = [
   firstLoginAchievement,
   firstQuizAchievement,
   goldStargazerAchievement,
   diamondSkyMasterAchievement,
   sevenDayLoginAchievement,
+  win10DuelsAchievement,
+  win100DuelsAchievement,
+  win1000DuelsAchievement,
 ];

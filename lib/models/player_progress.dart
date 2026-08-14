@@ -17,9 +17,10 @@ class PlayerProgress {
   // Daily challenge tracking
   final String? lastDailyChallengeDate;
 
-  // Avatar frames
+  // Avatar frames & Duels
   final Set<String> unlockedAvatarFrameIds;
   final String selectedAvatarFrameId;
+  final int duelsWon; // NEW: Tracks multiplayer wins
 
   const PlayerProgress({
     required this.totalXp,
@@ -37,6 +38,7 @@ class PlayerProgress {
     required this.lastDailyChallengeDate,
     required this.unlockedAvatarFrameIds,
     required this.selectedAvatarFrameId,
+    required this.duelsWon, // NEW
   });
 
   factory PlayerProgress.initial() {
@@ -56,6 +58,7 @@ class PlayerProgress {
       lastDailyChallengeDate: null,
       unlockedAvatarFrameIds: {'none'},
       selectedAvatarFrameId: 'none',
+      duelsWon: 0, // NEW
     );
   }
 
@@ -99,6 +102,7 @@ class PlayerProgress {
     String? lastDailyChallengeDate,
     Set<String>? unlockedAvatarFrameIds,
     String? selectedAvatarFrameId,
+    int? duelsWon, // NEW
   }) {
     return PlayerProgress(
       totalXp: totalXp ?? this.totalXp,
@@ -121,6 +125,7 @@ class PlayerProgress {
           unlockedAvatarFrameIds ?? this.unlockedAvatarFrameIds,
       selectedAvatarFrameId:
           selectedAvatarFrameId ?? this.selectedAvatarFrameId,
+      duelsWon: duelsWon ?? this.duelsWon, // NEW
     );
   }
 
@@ -145,6 +150,27 @@ class PlayerProgress {
   PlayerProgress addXp(int xp) {
     return copyWith(
       totalXp: totalXp + xp,
+    );
+  }
+
+  // NEW: Handles duel victories, unlocks achievements, and grants the crown frame!
+  PlayerProgress recordDuelWin() {
+    int newDuelsWon = duelsWon + 1;
+    Set<String> newAchievements = Set<String>.from(unlockedAchievements);
+    Set<String> newFrames = Set<String>.from(unlockedAvatarFrameIds);
+
+    if (newDuelsWon >= 10) newAchievements.add('win_10_duels');
+    if (newDuelsWon >= 100) newAchievements.add('win_100_duels');
+    
+    if (newDuelsWon >= 1000) {
+      newAchievements.add('win_1000_duels');
+      newFrames.add('crown'); // Instantly grant the crown frame!
+    }
+
+    return copyWith(
+      duelsWon: newDuelsWon,
+      unlockedAchievements: newAchievements,
+      unlockedAvatarFrameIds: newFrames,
     );
   }
 
@@ -245,6 +271,7 @@ class PlayerProgress {
       'lastDailyChallengeDate': lastDailyChallengeDate,
       'unlockedAvatarFrameIds': unlockedAvatarFrameIds.toList(),
       'selectedAvatarFrameId': selectedAvatarFrameId,
+      'duelsWon': duelsWon, // NEW
     };
   }
 
@@ -274,6 +301,7 @@ class PlayerProgress {
       ),
       selectedAvatarFrameId:
           json['selectedAvatarFrameId'] as String? ?? 'none',
+      duelsWon: json['duelsWon'] as int? ?? 0, // NEW
     );
   }
 }

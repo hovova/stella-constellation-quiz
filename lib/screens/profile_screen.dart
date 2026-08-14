@@ -77,7 +77,8 @@ class ProfileScreen extends StatelessWidget {
   int get leaderboardScore {
     return playerLevel * 1000 +
         campaignGoldAwardCount * 250 +
-        progress.unlockedAchievements.length * 100;
+        progress.unlockedAchievements.length * 100 +
+        progress.duelsWon * 50; 
   }
 
   bool isValidName(String name) {
@@ -263,41 +264,73 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: progress.selectedAvatarFrameId == 'seven_day'
-                              ? const Color(0xFFFFD98A)
-                              : progress.selectedAvatarFrameId == 'premium_gold'
-                                  ? const Color(0xFFB78CFF)
-                                  : Colors.transparent,
-                          width:
-                              progress.selectedAvatarFrameId == 'none' ? 0 : 3,
+                    // UPDATED: Placed in a Stack to render the physical crown
+                    Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: progress.selectedAvatarFrameId == 'seven_day'
+                                  ? const Color(0xFFFFD98A)
+                                  : progress.selectedAvatarFrameId == 'premium_gold'
+                                      ? const Color(0xFFB78CFF)
+                                      : progress.selectedAvatarFrameId == 'crown'
+                                          ? const Color(0xFFFFB300) // Golden amber
+                                          : Colors.transparent,
+                              width:
+                                  progress.selectedAvatarFrameId == 'none' ? 0 : 3,
+                            ),
+                            boxShadow: progress.selectedAvatarFrameId == 'none'
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: progress.selectedAvatarFrameId ==
+                                              'premium_gold'
+                                          ? const Color(0x55B78CFF)
+                                          : progress.selectedAvatarFrameId == 'crown'
+                                              ? const Color(0x55FFB300)
+                                              : const Color(0x55FFD98A),
+                                      blurRadius: 14,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 36,
+                            backgroundColor: const Color(0xFF071426),
+                            child: Icon(
+                              avatar.fallbackIcon,
+                              color: const Color(0xFFFFD98A),
+                              size: 38,
+                            ),
+                          ),
                         ),
-                        boxShadow: progress.selectedAvatarFrameId == 'none'
-                            ? null
-                            : [
-                                BoxShadow(
-                                  color: progress.selectedAvatarFrameId ==
-                                          'premium_gold'
-                                      ? const Color(0x55B78CFF)
-                                      : const Color(0x55FFD98A),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 4),
+                        if (progress.selectedAvatarFrameId == 'crown')
+                          Positioned(
+                            top: -12,
+                            right: -8,
+                            child: Transform.rotate(
+                              angle: 0.3,
+                              child: const Text(
+                                '👑',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black54,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 36,
-                        backgroundColor: const Color(0xFF071426),
-                        child: Icon(
-                          avatar.fallbackIcon,
-                          color: const Color(0xFFFFD98A),
-                          size: 38,
-                        ),
-                      ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
 
                     const SizedBox(width: 18),
@@ -401,6 +434,11 @@ class ProfileScreen extends StatelessWidget {
               title: text('goldAwards'),
               value: '$campaignGoldAwardCount',
               icon: Icons.workspace_premium,
+            ),
+            _ProfileStatCard(
+              title: text('duelsWon'), 
+              value: '${progress.duelsWon}',
+              icon: Icons.sports_esports, 
             ),
             _ProfileStatCard(
               title: text('achievements'),

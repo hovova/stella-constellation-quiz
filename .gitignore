@@ -8,6 +8,7 @@ flutter_*.png
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
+lib/generated_plugin_registrant.dart
 
 # Unused Flutter platforms for Android-only Stella
 ios/
@@ -39,6 +40,10 @@ secrets.json
 google-services.json
 GoogleService-Info.plist
 firebase_options.dart
+
+# Firebase (Additional CLI generated files)
+**/.firebaserc
+**/firebase_app_id_file.json
 
 # IDE
 .vscode/

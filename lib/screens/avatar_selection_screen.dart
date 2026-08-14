@@ -141,15 +141,15 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
     if (frameId == 'none') {
       return true;
     }
-
     if (frameId == 'seven_day') {
       return visibleProgress.unlockedAvatarFrameIds.contains('seven_day');
     }
-
     if (frameId == 'premium_gold') {
       return visibleProgress.hasPremium;
     }
-
+    if (frameId == 'crown') {
+      return visibleProgress.unlockedAvatarFrameIds.contains('crown');
+    }
     return false;
   }
 
@@ -159,6 +159,8 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
         return const Color(0xFFFFD98A);
       case 'premium_gold':
         return const Color(0xFFB78CFF);
+      case 'crown':
+        return const Color(0xFFFFB300); 
       default:
         return Colors.white24;
     }
@@ -170,6 +172,8 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
         return text('sevenDayFrame');
       case 'premium_gold':
         return text('premiumFrame');
+      case 'crown':
+        return text('crownFrame'); 
       default:
         return text('noFrame');
     }
@@ -181,6 +185,8 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
         return text('unlockedBySevenDayLogin');
       case 'premium_gold':
         return text('unlockedWithPremium');
+      case 'crown':
+        return text('unlockedBy1000Wins'); 
       default:
         return text('active');
     }
@@ -192,6 +198,8 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
         return Icons.calendar_month;
       case 'premium_gold':
         return Icons.workspace_premium;
+      case 'crown':
+        return Icons.emoji_events; 
       default:
         return Icons.block;
     }
@@ -205,36 +213,67 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
   }) {
     final hasFrame = frameId != 'none' && !locked;
     final color = frameColor(frameId);
+    
+    // FIX: Show crown emoji even when locked so user can see it!
+    final isCrown = frameId == 'crown'; 
 
     return Opacity(
       opacity: locked ? 0.35 : 1,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: hasFrame ? color : Colors.transparent,
-            width: hasFrame ? 3 : 0,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: hasFrame ? color : Colors.transparent,
+                width: hasFrame ? 3 : 0,
+              ),
+              boxShadow: hasFrame
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.32),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: CircleAvatar(
+              radius: large ? 36 : 26,
+              backgroundColor: const Color(0xFF071426),
+              child: Icon(
+                locked ? Icons.lock_outline : icon,
+                color: locked ? Colors.white38 : const Color(0xFFFFD98A),
+                size: large ? 40 : 28,
+              ),
+            ),
           ),
-          boxShadow: hasFrame
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.32),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
+          
+          if (isCrown)
+            Positioned(
+              top: large ? -12 : -8,
+              right: large ? -8 : -4,
+              child: Transform.rotate(
+                angle: 0.3, 
+                child: Text(
+                  '👑',
+                  style: TextStyle(
+                    fontSize: large ? 28 : 20,
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black54,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ]
-              : null,
-        ),
-        child: CircleAvatar(
-          radius: large ? 36 : 26,
-          backgroundColor: const Color(0xFF071426),
-          child: Icon(
-            locked ? Icons.lock_outline : icon,
-            color: locked ? Colors.white38 : const Color(0xFFFFD98A),
-            size: large ? 40 : 28,
-          ),
-        ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -337,6 +376,7 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
       'none',
       'seven_day',
       'premium_gold',
+      'crown',
     ];
 
     return Column(
@@ -367,33 +407,65 @@ class _AvatarSelectionScreenState extends State<AvatarSelectionScreen> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: frameId == 'none' ? Colors.white24 : color,
-                        width: frameId == 'none' ? 1.2 : 3,
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: frameId == 'none' ? Colors.white24 : color,
+                            width: frameId == 'none' ? 1.2 : 3,
+                          ),
+                          boxShadow: selected && frameId != 'none'
+                              ? [
+                                  BoxShadow(
+                                    color: color.withValues(alpha: 0.35),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFF071426),
+                          child: Icon(
+                            unlocked ? frameIcon(frameId) : Icons.lock_outline,
+                            color: unlocked ? color : Colors.white30,
+                            size: 27,
+                          ),
+                        ),
                       ),
-                      boxShadow: selected && frameId != 'none'
-                          ? [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.35),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
+                      
+                      // FIX: Removed `&& unlocked` so you can always see the crown emoji in the list!
+                      if (frameId == 'crown')
+                        Positioned(
+                          top: -10,
+                          right: -6,
+                          child: Opacity(
+                            opacity: unlocked ? 1.0 : 0.4, // Dims when locked
+                            child: Transform.rotate(
+                              angle: 0.3,
+                              child: const Text(
+                                '👑',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black54,
+                                      blurRadius: 3,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ]
-                          : null,
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: const Color(0xFF071426),
-                      child: Icon(
-                        unlocked ? frameIcon(frameId) : Icons.lock_outline,
-                        color: unlocked ? color : Colors.white30,
-                        size: 27,
-                      ),
-                    ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
 
                   const SizedBox(width: 16),

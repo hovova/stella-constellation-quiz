@@ -1,13 +1,24 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'firebase_options.dart';
 import 'screens/root_screen.dart';
 import 'services/audio_service.dart';
 import 'services/interstitial_ad_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Explicitly point Firebase Realtime Database to your region
+  FirebaseDatabase.instance.databaseURL =
+      'https://com-mriyainteractive-stella-default-rtdb.europe-west1.firebasedatabase.app';
 
   if (!kIsWeb) {
     await MobileAds.instance.initialize();

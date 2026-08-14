@@ -2,7 +2,7 @@ name: stella_constellation_quiz
 description: "A mobile constellation quiz game built with Flutter."
 publish_to: 'none'
 
-version: 1.0.4+5
+version: 1.1.0+1
 
 environment:
   sdk: ^3.12.1
@@ -15,9 +15,13 @@ dependencies:
   shared_preferences: ^2.5.5
   audioplayers: ^6.7.0
 
-  # Monetisation
+  # Firebase (Free Multiplayer Architecture)
+  firebase_core: ^3.4.0
+  firebase_database: ^11.3.10
+
+  # Monetisation (Updated for Google Play Billing Library v8.0.0+)
   google_mobile_ads: ^8.0.0
-  in_app_purchase: ^3.2.3
+  in_app_purchase: ^3.2.5
 
 dev_dependencies:
   flutter_test:
