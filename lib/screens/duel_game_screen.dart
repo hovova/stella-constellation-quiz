@@ -17,12 +17,14 @@ class DuelGameScreen extends StatefulWidget {
   final String roomCode;
   final PlayerProgress progress;
   final String playerName;
+  final void Function(PlayerProgress)? onProgressUpdated;
 
   const DuelGameScreen({
     super.key,
     required this.roomCode,
     required this.progress,
     required this.playerName,
+    this.onProgressUpdated,
   });
 
   @override
@@ -41,18 +43,22 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
   int opponentLives = startingLives;
   String opponentName = 'Opponent';
   String opponentSelectedOptionId = '';
-  String opponentAvatarFrameId = 'none'; // Captured from Firebase
+  String opponentAvatarFrameId = 'none';
 
   bool isHost = false;
   int secondsLeft = secondsPerQuestion;
 
   Timer? questionTimer;
+  Timer? opponentDisconnectTimer;
   Constellation? selectedAnswer;
   bool hasAnswered = false;
   bool timedOut = false;
   bool isGameOver = false;
   bool isShowingTransition = false;
-  bool isMatchIntro = true;
+  
+  bool isWaitingForMatch = true;
+  bool isMatchIntro = false;
+  
   int introCountdown = 3;
   Timer? introTimer;
   bool _hasProcessedWin = false;
@@ -66,13 +72,13 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     super.initState();
     questions = generateFixedQuestions();
     StellaAudioService.pauseMusicForGame();
-    _startIntroSequence();
   }
 
   @override
   void dispose() {
     introTimer?.cancel();
     questionTimer?.cancel();
+    opponentDisconnectTimer?.cancel();
     StellaAudioService.resumeMusicForMenu();
     super.dispose();
   }
@@ -131,7 +137,7 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     });
 
     questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || hasAnswered || isGameOver || isShowingTransition || isMatchIntro) {
+      if (!mounted || hasAnswered || isGameOver || isShowingTransition || isMatchIntro || isWaitingForMatch) {
         timer.cancel();
         return;
       }
@@ -150,6 +156,23 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     });
   }
 
+  void _startOpponentDisconnectTimer() {
+    opponentDisconnectTimer?.cancel();
+    opponentDisconnectTimer = Timer(const Duration(seconds: 15), () {
+      if (mounted && hasAnswered && !isShowingTransition && !isGameOver) {
+        triggerOpponentDisconnect();
+      }
+    });
+  }
+
+  void triggerOpponentDisconnect() {
+    if (isGameOver) return;
+    setState(() {
+      opponentLives = 0;
+    });
+    triggerGameOver();
+  }
+
   void handleTimeout() async {
     if (hasAnswered || isGameOver) return;
 
@@ -158,21 +181,22 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       timedOut = true;
       lives--;
     });
-
+    
+    _startOpponentDisconnectTimer();
     StellaAudioService.playWrongAnswer();
 
     await StellaMultiplayerService.submitAnswer(
       roomCode: widget.roomCode,
       playerName: widget.playerName,
       isCorrect: false,
-      currentLives: lives + 1,
+      currentLives: lives,
       questionIndex: currentQuestionIndex,
       selectedOptionId: '',
     );
   }
 
   void selectAnswer(Constellation answer) async {
-    if (hasAnswered || isGameOver || isShowingTransition || isMatchIntro) return;
+    if (hasAnswered || isGameOver || isShowingTransition || isMatchIntro || isWaitingForMatch) return;
 
     questionTimer?.cancel();
 
@@ -187,6 +211,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         lives--;
       }
     });
+    
+    _startOpponentDisconnectTimer();
 
     if (isCorrect) {
       StellaAudioService.playCorrectAnswer();
@@ -198,14 +224,16 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       roomCode: widget.roomCode,
       playerName: widget.playerName,
       isCorrect: isCorrect,
-      currentLives: isCorrect ? lives : lives + 1,
+      currentLives: lives,
       questionIndex: currentQuestionIndex,
       selectedOptionId: answer.id,
     );
   }
 
   void checkRoundProgression(Map<String, dynamic> playersMap) {
-    if (isShowingTransition || isGameOver || isMatchIntro) return;
+    if (isShowingTransition || isGameOver || isMatchIntro || isWaitingForMatch) return;
+
+    if (playersMap.length < 2) return;
 
     bool allSubmitted = true;
     playersMap.forEach((_, pData) {
@@ -218,6 +246,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
 
     if (allSubmitted) {
       questionTimer?.cancel();
+      opponentDisconnectTimer?.cancel();
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || isShowingTransition || isGameOver) return;
         setState(() {
@@ -242,6 +272,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     if (isGameOver) return;
     isGameOver = true;
     questionTimer?.cancel();
+    opponentDisconnectTimer?.cancel();
+    
     FirebaseDatabase.instanceFor(
       app: Firebase.app(),
       databaseURL: 'https://com-mriyainteractive-stella-default-rtdb.europe-west1.firebasedatabase.app',
@@ -320,7 +352,55 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
             }
           });
 
-          if (serverRound > currentQuestionIndex && !isGameOver && !isMatchIntro) {
+          if (status == 'waiting') {
+            return Scaffold(
+              body: StellaGradientScaffold(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 40,
+                      left: 20,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                        onPressed: () {
+                          StellaAudioService.playButtonTap();
+                          triggerGameOver();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: Color(0xFFFFD98A)),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Searching for opponent...',
+                            style: TextStyle(color: Colors.white70, fontSize: 18, decoration: TextDecoration.none),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (status == 'playing' && isWaitingForMatch) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && isWaitingForMatch) {
+                setState(() {
+                  isWaitingForMatch = false;
+                  isMatchIntro = true;
+                });
+                _startIntroSequence();
+              }
+            });
+          }
+
+          if (serverRound > currentQuestionIndex && !isGameOver && !isMatchIntro && !isWaitingForMatch) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted && currentQuestionIndex != serverRound) {
                 setState(() {
@@ -331,7 +411,7 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
             });
           }
 
-          if (status == 'playing') {
+          if (status == 'playing' && !isWaitingForMatch) {
             checkRoundProgression(playersMap);
           }
 
@@ -365,7 +445,7 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
-                onPressed: (hasAnswered || isShowingTransition) ? null : () => selectAnswer(option),
+                onPressed: (hasAnswered || isShowingTransition || isWaitingForMatch) ? null : () => selectAnswer(option),
                 child: Stack(
                   children: [
                     Center(
@@ -663,8 +743,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       
       if (!_hasProcessedWin) {
          _hasProcessedWin = true;
-         // ignore: unused_local_variable
          final updatedProgress = widget.progress.recordDuelWin();
+         if (widget.onProgressUpdated != null) {
+           widget.onProgressUpdated!(updatedProgress);
+         }
       }
     } else if (isLoser) {
       outcomeTitle = text('defeatTitle');

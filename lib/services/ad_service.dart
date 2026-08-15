@@ -17,12 +17,10 @@ class AdService {
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // Google official Android test interstitial ad unit.
-      return 'ca-app-pub-3940256099942544/1033173712';
+      return 'ca-app-pub-8413565619766617/3320683895';
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      // Google official iOS test interstitial ad unit.
       return 'ca-app-pub-3940256099942544/4411468910';
     }
 

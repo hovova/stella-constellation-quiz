@@ -107,6 +107,8 @@ class _RootScreenState extends State<RootScreen> {
   }
 
   void updateProgress(PlayerProgress updatedProgress) {
+    if (!mounted) return;
+
     setState(() {
       progress = updatedProgress;
     });
@@ -143,6 +145,7 @@ class _RootScreenState extends State<RootScreen> {
     }
 
     final languageCode = progress.selectedLanguageCode;
+
     String text(String key) => AppText.get(languageCode, key);
 
     final screens = [
@@ -151,16 +154,21 @@ class _RootScreenState extends State<RootScreen> {
         onProgressUpdated: updateProgress,
         onNavigateToCampaign: () => onTabSelected(1),
       ),
+
       CampaignScreen(
         progress: progress,
         onProgressUpdated: updateProgress,
       ),
+
       ConstellationsScreen(
         progress: progress,
       ),
+
       DuelScreen(
         progress: progress,
+        onProgressUpdated: updateProgress,
       ),
+
       ProfileScreen(
         progress: progress,
         onProgressUpdated: updateProgress,

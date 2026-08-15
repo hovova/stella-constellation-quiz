@@ -45,7 +45,6 @@ class StellaMultiplayerService {
 
       return roomCode;
     } catch (e) {
-      print('Error creating duel room: $e');
       rethrow;
     }
   }
@@ -56,14 +55,23 @@ class StellaMultiplayerService {
       final snapshot = await duelsRef.get();
 
       if (snapshot.exists) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+
         for (var child in snapshot.children) {
           final data = Map<String, dynamic>.from(child.value as Map);
-          if (data['status'] == 'waiting' &&
-              data['isPublic'] == true &&
-              data['players'] != null) {
-            final players = Map<String, dynamic>.from(data['players'] as Map);
+          if (data['status'] == 'waiting' && data['isPublic'] == true) {
+            int startTime = data['roundStartTime'] ?? 0;
+
+            if (now - startTime > 60000) {
+              await duelsRef.child(child.key!).remove();
+              continue;
+            }
+
+            final players = Map<String, dynamic>.from(data['players'] as Map? ?? {});
+
             if (players.length == 1 && !players.containsKey(playerName)) {
               final roomCode = child.key!;
+
               await duelsRef.child('$roomCode/players/$playerName').set({
                 'lives': 3,
                 'score': 0,
@@ -72,10 +80,12 @@ class StellaMultiplayerService {
                 'lastAnswerCorrect': false,
                 'selectedOptionId': '',
               });
+
               await duelsRef.child(roomCode).update({
                 'status': 'playing',
                 'currentRound': 0,
               });
+
               return roomCode;
             }
           }
@@ -84,12 +94,6 @@ class StellaMultiplayerService {
 
       String roomCode = _generate6DigitCode();
       DatabaseReference newRoomRef = duelsRef.child(roomCode);
-      var roomSnap = await newRoomRef.get();
-      while (roomSnap.exists) {
-        roomCode = _generate6DigitCode();
-        newRoomRef = duelsRef.child(roomCode);
-        roomSnap = await newRoomRef.get();
-      }
 
       await newRoomRef.set({
         'status': 'waiting',
@@ -110,7 +114,6 @@ class StellaMultiplayerService {
 
       return roomCode;
     } catch (e) {
-      print('Error in random matchmaking: $e');
       rethrow;
     }
   }
@@ -140,7 +143,6 @@ class StellaMultiplayerService {
       }
       return false;
     } catch (e) {
-      print('Error joining room: $e');
       return false;
     }
   }
@@ -155,13 +157,12 @@ class StellaMultiplayerService {
   }) async {
     try {
       final playerRef = _db.ref('duels/$roomCode/players/$playerName');
-      final updatedLives = isCorrect ? currentLives : (currentLives - 1);
 
       await playerRef.update({
         'answeredIndex': questionIndex,
         'lastAnswerCorrect': isCorrect,
         'selectedOptionId': selectedOptionId,
-        'lives': updatedLives,
+        'lives': currentLives,
       });
 
       if (isCorrect) {
@@ -171,7 +172,7 @@ class StellaMultiplayerService {
         });
       }
     } catch (e) {
-      print('Error submitting answer: $e');
+      rethrow;
     }
   }
 
@@ -182,7 +183,7 @@ class StellaMultiplayerService {
         'roundStartTime': ServerValue.timestamp,
       });
     } catch (e) {
-      print('Error advancing round: $e');
+      rethrow;
     }
   }
 

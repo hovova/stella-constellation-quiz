@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services") // Add this exact line
+    id("com.google.gms.google-services")
 }
 
 val keystoreProperties = Properties()
@@ -59,4 +59,10 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("com.android.billingclient:billing:8.0.0")
+    }
 }

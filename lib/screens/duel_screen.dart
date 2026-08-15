@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_text.dart';
@@ -10,10 +12,12 @@ import 'home_screen.dart';
 
 class DuelScreen extends StatefulWidget {
   final PlayerProgress progress;
+  final void Function(PlayerProgress)? onProgressUpdated;
 
   const DuelScreen({
     super.key,
     required this.progress,
+    this.onProgressUpdated,
   });
 
   @override
@@ -37,7 +41,7 @@ class _DuelScreenState extends State<DuelScreen> {
       if (status == 'playing') {
         _roomSubscription?.cancel();
         if (mounted) {
-          Navigator.of(context, rootNavigator: true).pop(); // Close dialog
+          Navigator.of(context, rootNavigator: true).pop();
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -45,6 +49,7 @@ class _DuelScreenState extends State<DuelScreen> {
                 roomCode: roomCode,
                 progress: widget.progress,
                 playerName: widget.progress.playerName,
+                onProgressUpdated: widget.onProgressUpdated,
               ),
             ),
           );
@@ -66,10 +71,28 @@ class _DuelScreenState extends State<DuelScreen> {
               subtitle: subtitle,
               roomCode: roomCode,
               cancelText: text('cancel'),
-              onCancel: () {
+              onCancel: () async {
                 _roomSubscription?.cancel();
                 StellaBotService.cancelTimer();
-                Navigator.pop(dialogContext);
+                
+                try {
+                  final ref = FirebaseDatabase.instanceFor(
+                    app: Firebase.app(),
+                    databaseURL: 'https://com-mriyainteractive-stella-default-rtdb.europe-west1.firebasedatabase.app',
+                  ).ref('duels/$roomCode');
+                  
+                  final snap = await ref.get();
+                  if (snap.exists) {
+                    final data = Map<String, dynamic>.from(snap.value as Map);
+                    if (data['status'] == 'waiting') {
+                      await ref.remove();
+                    }
+                  }
+                } catch (_) {}
+
+                if (mounted) {
+                  Navigator.pop(dialogContext);
+                }
               },
             );
           },
@@ -80,12 +103,10 @@ class _DuelScreenState extends State<DuelScreen> {
 
   void _handlePlayWithBot() async {
     try {
-      // Create a private room and instantly inject a bot
       final roomCode = await StellaMultiplayerService.createDuelRoom(widget.progress.playerName);
       await StellaBotService.joinBotInstantly(roomCode);
 
       if (mounted) {
-        // Skip the searching dialog and jump straight to the arena!
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -93,6 +114,7 @@ class _DuelScreenState extends State<DuelScreen> {
               roomCode: roomCode,
               progress: widget.progress,
               playerName: widget.progress.playerName,
+              onProgressUpdated: widget.onProgressUpdated,
             ),
           ),
         );
@@ -110,8 +132,6 @@ class _DuelScreenState extends State<DuelScreen> {
     try {
       final roomCode = await StellaMultiplayerService.findOrCreateRandomRoom(widget.progress.playerName);
       
-      // Removed the bot fallback timer. This queue now waits indefinitely for real humans.
-
       if (mounted) {
         _showSearchingDialog(
           text('findingOpponent'),
@@ -208,6 +228,7 @@ class _DuelScreenState extends State<DuelScreen> {
                             roomCode: code,
                             progress: widget.progress,
                             playerName: widget.progress.playerName,
+                            onProgressUpdated: widget.onProgressUpdated,
                           ),
                         ),
                       );
@@ -298,14 +319,12 @@ class _DuelScreenState extends State<DuelScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
-                  // NEW: Play with AI Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F7A4D), // A distinct green color for AI
+                        backgroundColor: const Color(0xFF1F7A4D),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -319,8 +338,6 @@ class _DuelScreenState extends State<DuelScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // Standard Matchmaking Buttons
                   SizedBox(
                     width: double.infinity,
                     height: 52,

@@ -6,7 +6,6 @@ class AchievementIds {
   static const goldStargazer = 'gold_stargazer';
   static const diamondSkyMaster = 'diamond_sky_master';
   static const sevenDayLogin = 'seven_day_login';
-  // New Duel Achievements
   static const win10Duels = 'win_10_duels';
   static const win100Duels = 'win_100_duels';
   static const win1000Duels = 'win_1000_duels';

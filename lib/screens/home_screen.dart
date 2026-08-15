@@ -10,7 +10,7 @@ import '../widgets/sound_toggle_button.dart';
 import 'achievements_screen.dart';
 import 'daily_match_challenge_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final PlayerProgress progress;
   final void Function(PlayerProgress updatedProgress) onProgressUpdated;
   final VoidCallback onNavigateToCampaign;
@@ -22,6 +22,38 @@ class HomeScreen extends StatelessWidget {
     required this.onNavigateToCampaign,
   });
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late PlayerProgress _progress;
+
+  @override
+  void initState() {
+    super.initState();
+    _progress = widget.progress;
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.progress != widget.progress) {
+      _progress = widget.progress;
+    }
+  }
+
+  void _updateProgress(PlayerProgress updatedProgress) {
+    if (!mounted) return;
+
+    setState(() {
+      _progress = updatedProgress;
+    });
+
+    widget.onProgressUpdated(updatedProgress);
+  }
+
   void openDailyChallenge(BuildContext context) {
     StellaAudioService.playButtonTap();
 
@@ -29,8 +61,8 @@ class HomeScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => DailyMatchChallengeScreen(
-          progress: progress,
-          onProgressUpdated: onProgressUpdated,
+          progress: _progress,
+          onProgressUpdated: _updateProgress,
         ),
       ),
     );
@@ -42,26 +74,29 @@ class HomeScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AchievementsScreen(progress: progress),
+        builder: (_) => AchievementsScreen(
+          progress: _progress,
+        ),
       ),
     );
   }
 
   void continueCampaign() {
     StellaAudioService.playButtonTap();
-    onNavigateToCampaign();
+    widget.onNavigateToCampaign();
   }
 
   @override
   Widget build(BuildContext context) {
-    final unlockedAchievements = progress.unlockedAchievements.length;
+    final unlockedAchievements = _progress.unlockedAchievements.length;
     final totalAchievements = allAchievements.length;
+
     final achievementProgress = totalAchievements == 0
         ? 0.0
         : unlockedAchievements / totalAchievements;
 
     String text(String key) {
-      return AppText.get(progress.selectedLanguageCode, key);
+      return AppText.get(_progress.selectedLanguageCode, key);
     }
 
     return StellaGradientScaffold(
@@ -84,19 +119,19 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 LanguageSelector(
-                  progress: progress,
-                  onProgressUpdated: onProgressUpdated,
+                  progress: _progress,
+                  onProgressUpdated: _updateProgress,
                 ),
                 const SizedBox(width: 8),
                 SoundToggleButton(
-                  progress: progress,
-                  onProgressUpdated: onProgressUpdated,
+                  progress: _progress,
+                  onProgressUpdated: _updateProgress,
                 ),
                 const SizedBox(width: 8),
                 PremiumBanner(
-                  languageCode: progress.selectedLanguageCode,
-                  progress: progress,
-                  onProgressUpdated: onProgressUpdated,
+                  languageCode: _progress.selectedLanguageCode,
+                  progress: _progress,
+                  onProgressUpdated: _updateProgress,
                 ),
               ],
             ),
@@ -147,7 +182,7 @@ class HomeScreen extends StatelessWidget {
 
             _HomeActionCard(
               title: text('dailyChallenge'),
-              subtitle: progress.hasCompletedDailyChallengeToday
+              subtitle: _progress.hasCompletedDailyChallengeToday
                   ? text('dailyChallengeAlreadyClaimed')
                   : text('dailyChallengeSubtitle'),
               icon: Icons.bolt_outlined,
@@ -257,8 +292,8 @@ class _AchievementProgressCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 9,
-                  backgroundColor: const Color(0xFF071426),
-                  color: const Color(0xFFFFD98A),
+                  backgroundColor: Color(0xFF071426),
+                  color: Color(0xFFFFD98A),
                 ),
               ),
 
@@ -359,7 +394,9 @@ class StellaGradientScaffold extends StatelessWidget {
           ],
         ),
       ),
-      child: SafeArea(child: child),
+      child: SafeArea(
+        child: child,
+      ),
     );
   }
 }
